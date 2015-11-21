@@ -7,20 +7,29 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class Chromosome {
+    public int width;
+    public int height;
     public List<Seed> seeds;
 
-    public Chromosome() {
+    public Chromosome(int width, int height) {
+    this.width =width;
+        this.height = height;
         this.seeds = new ArrayList<>();
+
     }
 
     public Chromosome clone() {
-        Chromosome chromosome = new Chromosome();
+        Chromosome chromosome = new Chromosome(this.width, this.height);
         chromosome.seeds = this.seeds.stream().map(Seed::clone).collect(Collectors.toList());
         return chromosome;
     }
 
-    public ImageFile toCJPFile(int width, int height){
-        CJPFile cjpFile = new CJPFile();
+    public ImageFile toCJPFile(){
+        CJPFile cjpFile = new CJPFile(width, height);
+        seeds.forEach((s) -> {
+            // TODO: cjpFile.compose(s)
+        });
+
         return cjpFile;
     }
 

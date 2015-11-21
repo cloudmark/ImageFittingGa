@@ -10,43 +10,44 @@ public class GeneticAlgorithm<GS> {
     public GeneticAlgorithm(GeneticAlgorithmConfig<GS> config) {
         this.config = config;
     }
+    public List<GenerationFeedback<GS>> feedbacks = new ArrayList<>();
 
-    public GS Evolve(List<GS> initialPopulation, GenerationFeedback<GS> generationFeedbackCallback) {
+    public GeneticAlgorithm<GS> AddWatcher(GenerationFeedback<GS> watch) {
+        this.feedbacks.add(watch);
+        return this;
+    }
+
+    public GS Evolve(List<GS> initialPopulation) {
         List<GS> currentPopulation = initialPopulation;
         int currentGeneration = 0;
         double currentBestScore = Double.MAX_VALUE;
         while (!config.isGoodEnough.cond(currentGeneration, currentBestScore, currentPopulation)) {
-            currentPopulation = prunePopulation(currentPopulation);
-            if (generationFeedbackCallback != null){
-                generationFeedbackCallback.feedback(currentGeneration, currentPopulation);
-            }
-            currentPopulation = crossover(currentPopulation);
-            currentPopulation = mutate(currentPopulation);
+            final int currentGenerationFinal = currentGeneration;
+            currentPopulation = prunePopulation(currentGeneration, currentPopulation);
+            final List<GS> currentPopulationFinal = currentPopulation;
+            feedbacks.forEach((x) -> x.feedback(currentGenerationFinal, currentPopulationFinal));
+            currentPopulation = crossover(currentGeneration, currentPopulation);
+            currentPopulation = mutate(currentGeneration, currentPopulation);
             currentGeneration++;
         }
         return currentPopulation.get(0);
     }
 
-    public GS Evolve(List<GS> initialPopulation) {
-        return this.Evolve(initialPopulation, null);
-    }
-
-
-    private List<GS> prunePopulation(List<GS> currentPopulation) {
+    private List<GS> prunePopulation(int currentGeneration, List<GS> currentPopulation) {
         Map<GS, Double> scoreCache = currentPopulation.parallelStream()
-                .map((x) -> new Tuple<>(x, config.scoringOperator.score(x)))
+                .map((x) -> new Tuple<>(x, config.scoringOperator.score(currentGeneration, x)))
                 .collect(Collectors.toMap(Tuple::getFirst, Tuple::getSecond));
         currentPopulation.sort((x, y) -> scoreCache.get(x).compareTo(scoreCache.get(y)));
         return currentPopulation.subList(0, config.initialPopulationCount);
     }
 
-    private List<GS> mutate(List<GS> sourcePopulation) {
+    private List<GS> mutate(int currentGeneration, List<GS> sourcePopulation) {
         List<GS> population = new ArrayList<>(sourcePopulation.size());
         sourcePopulation.parallelStream().forEach((chromosome) -> {
             if (random.nextDouble() < config.mutationRate) {
                 GS mutatedChromosome = chromosome;
                 for (MutationOperator<GS> mutationOperator : config.mutationOperators) {
-                    mutatedChromosome = mutationOperator.mutate(mutatedChromosome);
+                    mutatedChromosome = mutationOperator.mutate(currentGeneration, mutatedChromosome);
                 }
                 population.add(mutatedChromosome);
             } else {
@@ -56,7 +57,7 @@ public class GeneticAlgorithm<GS> {
         return population;
     }
 
-    private List<GS> crossover(List<GS> sourcePopulation) {
+    private List<GS> crossover(int currentGeneration, List<GS> sourcePopulation) {
         List<GS> population = new ArrayList<>(sourcePopulation.size());
         population.addAll(sourcePopulation);
         int currentPopulationCount = sourcePopulation.size();
@@ -66,7 +67,7 @@ public class GeneticAlgorithm<GS> {
             GS mum = sourcePopulation.get(mumIndex);
             GS dad = sourcePopulation.get(dadIndex);
             config.crossOverOperators.stream().forEach((crossOverOperator) -> {
-                Tuple<GS, GS> childrenTuple = crossOverOperator.crossOver(mum, dad, config.crossOverChromosomePercentage);
+                Tuple<GS, GS> childrenTuple = crossOverOperator.crossOver(currentGeneration, mum, dad, config.crossOverChromosomePercentage);
                 population.add(childrenTuple.getFirst());
                 population.add(childrenTuple.getSecond());
             });
