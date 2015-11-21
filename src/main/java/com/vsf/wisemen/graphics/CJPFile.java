@@ -27,18 +27,10 @@ public class CJPFile extends ImageFile {
     private boolean[][] pastes;
     private ImageFile parent;
 
-    public CJPFile() {
+    public CJPFile(){
         this.parent = null;
         this.factor = 1;
-        this.row = 0;
-        this.column = 0;
-    }
-
-    public CJPFile(int width, int height) {
-        this.parent = null;
-        this.factor = 1;
-        this.column = width;
-        this.row = height;
+        //Arrays.fill(pastes,false);
     }
 
     public CJPFile(ImageFile parent, int factor) {
@@ -50,7 +42,7 @@ public class CJPFile extends ImageFile {
 
     @Override
     public ImageFile getParent() {
-        return this.parent;
+        return null;
     }
 
     @Override
@@ -80,20 +72,20 @@ public class CJPFile extends ImageFile {
     }
 
 
-    public ArrayList<Pixel> getRectanglePixels(int x0, int y0, int x1, int y1) {
+    public ArrayList<Pixel> getRectanglePixels(int x0, int y0, int x1, int y1){
         ArrayList<Pixel> answer = new ArrayList<Pixel>();
-        if (x1 >= this.column) x1 = this.column - 1;
-        if (y1 >= this.row) y1 = this.row - 1;
+        if (x1 >= this.column) x1 = this.column-1;
+        if (y1 >= this.row) y1 = this.row-1;
         if ((x0 > x1) || (y0 > y1)) throw new NotImplementedException();
-        for (int i = 0; i <= x1 - x0; i++) {
-            for (int j = 0; j <= y1 - y0; j++) {
-                answer.add(matrix[x0 + i][y0 + j]);
+        for (int i = 0; i<=x1-x0; i++)
+        {
+            for (int j = 0; j <= y1-y0; j++){
+                answer.add(matrix[x0+i][y0+j]);
             }
         }
         return answer;
 
     }
-
 
     public static Pixel AveragePixel(List<Pixel> pixels) {
         int allred = 0;
@@ -103,7 +95,9 @@ public class CJPFile extends ImageFile {
             allred += pixel.r;
             allgreen += pixel.g;
             allblue += pixel.b;
+
         }
+        //System.out.println("size of pixels: "+pixels.size());
         return new Pixel(allred / pixels.size(), allgreen / pixels.size(), allblue / pixels.size());
     }
 
@@ -116,6 +110,7 @@ public class CJPFile extends ImageFile {
         subcjp.matrix = new Pixel[subcjp.column][subcjp.row];
         for (int i = 0; i < subcjp.column; i++) {
             for (int j = 0; j < subcjp.row; j++) {
+                //System.out.println("getRectagle in subsample: i:"+i+" j:"+j+" factor: "+factor);
                 subcjp.matrix[i][j] = AveragePixel(this.getRectanglePixels(i * factor, j * factor, i * factor + (factor - 1), j * factor + (factor - 1)));
             }
         }
@@ -177,37 +172,7 @@ public class CJPFile extends ImageFile {
         }
         this.parent = null;
         this.factor = 1;
-    }
 
-    private Color[] getColorLine(int idx) {
-        Color[] colours = new Color[this.getWidth()];
-        for (int i = 0; i < this.getWidth(); ++i) {
-            Pixel p = getPixel(idx, i);
-            colours[i] = new Color(p.r, p.g, p.b);
-        }
-
-        return colours;
-    }
-
-    public void saveAsPNG(String pngFilename) {
-        BufferedImage image = new BufferedImage(this.getWidth(), this.getHeight(), 1);
-        int[] colData = new int[this.getWidth() * this.getHeight()];
-
-        for (int e = 0; e < this.getHeight(); ++e) {
-            Color[] coloursInLine = this.getColorLine(e);
-
-            for (int i = 0; i < coloursInLine.length; ++i) {
-                colData[e * this.getWidth() + i] = coloursInLine[i].getRed() << 16 | coloursInLine[i].getGreen() << 8 | coloursInLine[i].getBlue();
-            }
-        }
-
-        image.setRGB(0, 0, this.getWidth(), this.getHeight(), colData, 0, this.getWidth());
-
-        try {
-            ImageIO.write(image, "PNG", new File(pngFilename));
-        } catch (IOException var7) {
-            var7.printStackTrace();
-        }
 
     }
 
@@ -234,20 +199,54 @@ public class CJPFile extends ImageFile {
         }
     }
 
-    public void paste(int x, int y, CJPFile img) {
+    public void paste(int x, int y, CJPFile img){
         for (int i = 0; i < img.column; i++) {
             for (int j = 0; j < img.row; j++) {
-                this.matrix[x + i][y + j] = img.matrix[i][j];
+                this.matrix[x+i][y+j] = img.matrix[i][j];
             }
         }
 
     }
 
     @Override
-    public void compose(int sx, int sy, CJPFile compositeFile, int tx, int ty, int width, int height) {
-        CJPFile rectangle = compositeFile.getRectangle(sx, sy, sx + width - 1, sy + width - 1);
-        this.paste(tx, ty, rectangle);
+    public void compose(int sx, int sy, CJPFile compositeFile, int tx, int ty, int width, int height){
+        CJPFile rectangle = compositeFile.getRectangle(sx,sy,sx+width-1,sy+width-1);
+        this.paste(tx,ty,rectangle);
     }
+
+
+    private Color[] getColorLine(int idx) {
+        Color[] colours = new Color[this.getWidth()];
+        for(int i = 0; i < this.getWidth(); ++i) {
+            Pixel p = getPixel(idx, i);
+            colours[i] = new Color(p.r, p.g, p.b);
+        }
+
+        return colours;
+    }
+
+    public void saveAsPNG(String pngFilename) {
+        BufferedImage image = new BufferedImage(this.getWidth(), this.getHeight(), 1);
+        int[] colData = new int[this.getWidth() * this.getHeight()];
+
+        for(int e = 0; e < this.getHeight(); ++e) {
+            Color[] coloursInLine = this.getColorLine(e);
+
+            for(int i = 0; i < coloursInLine.length; ++i) {
+                colData[e * this.getWidth() + i] = coloursInLine[i].getRed() << 16 | coloursInLine[i].getGreen() << 8 | coloursInLine[i].getBlue();
+            }
+        }
+
+        image.setRGB(0, 0, this.getWidth(), this.getHeight(), colData, 0, this.getWidth());
+
+        try {
+            ImageIO.write(image, "PNG", new File(pngFilename));
+        } catch (IOException var7) {
+            var7.printStackTrace();
+        }
+
+    }
+
 
     public static void main(String[] args) {
 
@@ -257,7 +256,7 @@ public class CJPFile extends ImageFile {
         cjp.read("C:\\Users\\james\\Desktop\\GOC\\pikachu.cjp");
         CJPFile rectangleToPrint = cjp.getRectangle(100, 100, 200, 205);
         rectangleToPrint.write("C:\\Users\\james\\Desktop\\GOC\\rectangleToPrint.cjp");
-        cjp.compose(0, 0, rectangleToPrint, 0, 0, 100, 100);
+        cjp.compose(0,0,rectangleToPrint,0,0,100,100);
         cjp.write("C:\\Users\\james\\Desktop\\GOC\\PikaShift.cjp");
         System.out.println("Pixel (4,7) is: " + cjp.getPixel(100, 100).toString());
         List<Pixel> rectanglePixels = cjp.getRectanglePixels(100, 100, 200, 205);
