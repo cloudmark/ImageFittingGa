@@ -15,9 +15,9 @@ import java.util.List;
 import javax.imageio.ImageIO;
 
 public class CJP {
-    private int width = -1;
-    private int height = -1;
-    private final List<String> lines = new ArrayList();
+    public int width = -1;
+    public int height = -1;
+    public final List<String> lines = new ArrayList();
 
     public CJP() {
     }
