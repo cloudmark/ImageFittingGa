@@ -1,0 +1,4 @@
+canadaFlag/pokemon2Sample1.cjp
+canadaFlag/pokemon2Sample2.cjp
+canadaFlag/pokemon2Sample3.cjp
+canadaFlag/pokemon2Sample4.cjp

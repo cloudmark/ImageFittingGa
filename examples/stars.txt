@@ -1,0 +1,2 @@
+canadaFlag/blackSample.cjp
+canadaFlag/whiteSample.cjp
