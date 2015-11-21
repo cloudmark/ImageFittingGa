@@ -9,7 +9,7 @@ public class Pixel {
     int g;
     int b;
 
-    Pixel(int r, int g, int b){
+    public Pixel(int r, int g, int b){
         this.r = r;
         this.b = b;
         this.g = g;
