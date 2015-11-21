@@ -22,7 +22,9 @@ public abstract class ImageFile {
 
     public abstract int getHeight();
 
-    public abstract void compose(int sx, int sy, CJPFile compositeFile, int tx, int ty, int width, int height);
+    public void compose(int sx, int sy, CJPFile compositeFile, int tx, int ty, int width, int height){
+        throw new UnsupportedOperationException();
+    }
 
     public double score(int sx, int sy, ImageFile imageFile, int tx, int ty, int width, int height){
         double ans = 0.0;

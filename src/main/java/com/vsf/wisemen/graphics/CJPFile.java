@@ -33,6 +33,13 @@ public class CJPFile extends ImageFile {
         //Arrays.fill(pastes,false);
     }
 
+    public CJPFile(int width, int height){
+        this.row = height;
+        this.column = width;
+        this.parent = null;
+        this.factor = 1; 
+    }
+
     public CJPFile(ImageFile parent, int factor) {
         this.parent = parent;
         this.factor = factor;
