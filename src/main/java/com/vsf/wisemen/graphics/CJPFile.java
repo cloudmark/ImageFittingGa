@@ -136,8 +136,8 @@ public class CJPFile implements ImageFile {
     public void read(String filename) {
         CJP cjp = new CJP();
         cjp.read(filename);
-        this.row = cjp.width;
-        this.column = cjp.height;
+        this.row = cjp.height;
+        this.column = cjp.width;
         this.matrix = new Pixel[column][row];
         this.raw = new ArrayList<>();
         for (int i=0; i<cjp.lines.size(); i++) {
@@ -148,8 +148,8 @@ public class CJPFile implements ImageFile {
         System.out.println(raw.size());
         System.out.println(this.column*this.row);
         if (raw.size() != this.column * this.row) throw new NotImplementedException();
-        for (int i = 0; i<this.column; i++){
-            for (int j = 0; j<this.row; j++){
+        for (int j = 0; j<this.row; j++){
+            for (int i = 0; i<this.column; i++){
                 curString = raw.get(cnt);
                 int r = Integer.parseInt(curString.substring(0,2), 16);
                 int g = Integer.parseInt(curString.substring(2,4), 16);
