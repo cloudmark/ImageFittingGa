@@ -20,16 +20,19 @@ public class CJPFile extends ImageFile {
     private int column;
     private int factor;
     private Pixel[][] matrix;
+    private boolean[][] pastes;
     private ImageFile parent;
 
     public CJPFile(){
         this.parent = null;
         this.factor = 1;
+        //Arrays.fill(pastes,false);
     }
 
     public CJPFile(ImageFile parent, int factor) {
         this.parent = parent;
         this.factor = factor;
+        //Arrays.fill(pastes,false);
     }
 
 
@@ -48,7 +51,7 @@ public class CJPFile extends ImageFile {
         }
     }
 
-    public ImageFile getRect(int x0, int y0, int x1, int y1) {
+    public CJPFile getRectangle(int x0, int y0, int x1, int y1) {
         if (x1 >= this.column) x1 = this.column - 1;
         if (y1 >= this.row) y1 = this.row - 1;
         if ((x0 > x1) || (y0 > y1)) throw new NotImplementedException();
@@ -65,7 +68,29 @@ public class CJPFile extends ImageFile {
     }
 
 
+    public ArrayList<Pixel> getRectanglePixels(int x0, int y0, int x1, int y1){
+        ArrayList<Pixel> answer = new ArrayList<Pixel>();
+        if (x1 >= this.column) x1 = this.column-1;
+        if (y1 >= this.row) y1 = this.row-1;
+        if ((x0 > x1) || (y0 > y1)) throw new NotImplementedException();
+        for (int i = 0; i<=x1-x0; i++)
+        {
+            for (int j = 0; j <= y1-y0; j++){
+                answer.add(matrix[x0+i][y0+j]);
+            }
+        }
+        return answer;
+
+    }
+
+    /*
     public ArrayList<Pixel> getRectangle(int x0, int y0, int x1, int y1) {
+        System.out.println("getRectangle params:");
+        System.out.println(x0);
+        System.out.println(y0);
+        System.out.println(x1);
+        System.out.println(y1);
+        System.out.println("---------");
         ArrayList<Pixel> answer = new ArrayList<Pixel>();
         if (x1 >= this.column) x1 = this.column - 1;
         if (y1 >= this.row) y1 = this.row - 1;
@@ -73,10 +98,11 @@ public class CJPFile extends ImageFile {
         for (int i = 0; i <= x1 - x0; i++) {
             answer.addAll(Arrays.asList(matrix[x0 + i]).subList(y0, y1 - y0 + 1));
         }
+        System.out.println("size answer of getRectangle:"+answer.size());
         return answer;
 
     }
-
+    */
 
     public static Pixel AveragePixel(List<Pixel> pixels) {
         int allred = 0;
@@ -86,8 +112,9 @@ public class CJPFile extends ImageFile {
             allred += pixel.r;
             allgreen += pixel.g;
             allblue += pixel.b;
-            ;
+
         }
+        //System.out.println("size of pixels: "+pixels.size());
         return new Pixel(allred / pixels.size(), allgreen / pixels.size(), allblue / pixels.size());
     }
 
@@ -100,7 +127,8 @@ public class CJPFile extends ImageFile {
         subcjp.matrix = new Pixel[subcjp.column][subcjp.row];
         for (int i = 0; i < subcjp.column; i++) {
             for (int j = 0; j < subcjp.row; j++) {
-                subcjp.matrix[j][i] = AveragePixel(this.getRectangle(i * factor, j * factor, i * factor + (factor - 1), j * factor + (factor - 1)));
+                //System.out.println("getRectagle in subsample: i:"+i+" j:"+j+" factor: "+factor);
+                subcjp.matrix[i][j] = AveragePixel(this.getRectanglePixels(i * factor, j * factor, i * factor + (factor - 1), j * factor + (factor - 1)));
             }
         }
         return subcjp;
@@ -188,22 +216,46 @@ public class CJPFile extends ImageFile {
         }
     }
 
+    //System.arraycopy(img.matrix[i], 0, this.matrix, x + i, img.matrix[i].length);
+    public void paste(int x, int y, CJPFile img){
+        for (int i = 0; i < img.column; i++) {
+            for (int j = 0; j < img.row; j++) {
+                this.matrix[x+i][y+j] = img.matrix[i][j];
+            }
+        }
+
+    }
+
+    @Override
+    public void compose(int sx, int sy, CJPFile compositeFile, int tx, int ty, int width, int height){
+        CJPFile rectangle = compositeFile.getRectangle(sx,sy,sx+width-1,sy+width-1);
+        this.paste(tx,ty,rectangle);
+        //boolean[][] truefills = new boolean[width][height];
+        //Arrays.fill(truefills,true);
+        //for (int i = 0; i < width; i++) {
+        //    System.arraycopy(truefills[i], 0, this.pastes, tx, height);
+        //}
+
+    }
+
     public static void main(String[] args) {
 
 
         System.out.println("!!!!!!!!!!!!!!!!beda!!!!!!!!!!!!!!!!");
         CJPFile cjp = new CJPFile();
         cjp.read("C:\\Users\\james\\Desktop\\GOC\\pikachu.cjp");
-        ImageFile rectangleToPrint = cjp.getRect(100, 100, 200, 205);
+        CJPFile rectangleToPrint = cjp.getRectangle(100, 100, 200, 205);
         rectangleToPrint.write("C:\\Users\\james\\Desktop\\GOC\\rectangleToPrint.cjp");
-        cjp.write("C:\\Users\\james\\Desktop\\GOC\\originalPika.cjp");
+        cjp.compose(0,0,rectangleToPrint,0,0,100,100);
+        cjp.write("C:\\Users\\james\\Desktop\\GOC\\PikaShift.cjp");
         System.out.println("Pixel (4,7) is: " + cjp.getPixel(100, 100).toString());
-        List<Pixel> rectanglePixels = cjp.getRectangle(100, 100, 200, 205);
+        List<Pixel> rectanglePixels = cjp.getRectanglePixels(100, 100, 200, 205);
 
         for (int i = 0; i < rectanglePixels.size(); i++) {
             System.out.println("Pixel " + i + " of rectanglePixels: " + rectanglePixels.get(i).toString());
         }
         System.out.println("Average Pixel: " + AveragePixel(rectanglePixels).toString());
+
         ImageFile cjpsub20 = cjp.subsample(12);
         cjpsub20.write("C:\\Users\\james\\Desktop\\GOC\\subsample12.cjp");
         System.out.println("Generated subsample12.cjp file");

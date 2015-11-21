@@ -55,4 +55,9 @@ public abstract class ImageFile {
     public SimilarityResult findBestFittingImage(int sx, int sy, int width, int height, List<ImageFile> samples) {
         throw new NotImplementedException();
     }
+
+    public void compose(int sx, int sy, CJPFile compositeFile, int tx, int ty, int width, int height)
+    {
+
+    }
 }
