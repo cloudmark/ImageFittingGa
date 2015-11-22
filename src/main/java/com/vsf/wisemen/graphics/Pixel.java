@@ -39,4 +39,15 @@ public class Pixel {
         Pixel that = (Pixel)obj;
         return this.r == that.r && this.g == that.g && this.b == that.b;
     }
+
+    private double squareNum(double num){
+        return num * num;
+    }
+
+    public double getDistance(Pixel thatPixel){
+        return Math.sqrt(
+                squareNum(thatPixel.r - this.r)
+                        + squareNum(thatPixel.g - this.g)
+                        + squareNum(thatPixel.b - this.b));
+    }
 }
