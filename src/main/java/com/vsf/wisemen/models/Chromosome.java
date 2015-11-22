@@ -1,8 +1,6 @@
 package com.vsf.wisemen.models;
 
-import com.vsf.wisemen.graphics.CJPFile;
-import com.vsf.wisemen.graphics.ImageFile;
-import com.vsf.wisemen.graphics.SimilarityResult;
+import com.vsf.wisemen.graphics.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -46,5 +44,23 @@ public class Chromosome {
             buffer += seed;
         }
         return buffer;
+    }
+
+    public CLGFile toCLGFile()
+    {
+        ImageFile curImgFile;
+        SimilarityResult curSimResult;
+        Seed curSeed;
+        CLGFile clgFile = new CLGFile(new ArrayList<CLGFileEntry>());
+        for (int i=0; i<seeds.size(); i++){
+            curImgFile = seeds.get(i).similarityResult.bestFittingSample;
+            curSimResult = seeds.get(i).similarityResult;
+            curSeed = seeds.get(i);
+            CLGFileEntry clgentry = new CLGFileEntry(curImgFile.getComposing_image_id(),
+                    curSeed.originalX,curSeed.originalY, curSeed.width,curSeed.height,
+                    curSimResult.tx,curSimResult.ty);
+            clgFile.entries.add(clgentry);
+        }
+        return clgFile;
     }
 }

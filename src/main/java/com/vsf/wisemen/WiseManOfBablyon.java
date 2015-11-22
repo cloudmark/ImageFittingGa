@@ -289,10 +289,10 @@ public class WiseManOfBablyon {
 //        targetFile.saveAsPNG("/Users/markgalea/Dev/Source/Java/ImageFittingGA/examples/marilyn/debug/marilyn_small.png");
 //        wiseManOfBablyon.SetDebugDirectory("/Users/markgalea/Dev/Source/Java/ImageFittingGA/examples/marilyn/debug");
 
-        CJPFile targetFile = (CJPFile)(new CJPFile().read(USERS_MARKGALEA_DEV_SOURCE_JAVA_IMAGE_FITTING_GA_EXAMPLES + FOLDER + "/pikachu.cjp").subsample(20));
-        wiseManOfBablyon.AddSample(new CJPFile().read(USERS_MARKGALEA_DEV_SOURCE_JAVA_IMAGE_FITTING_GA_EXAMPLES + FOLDER + "/white.cjp").subsample(20));
-        wiseManOfBablyon.AddSample(new CJPFile().read(USERS_MARKGALEA_DEV_SOURCE_JAVA_IMAGE_FITTING_GA_EXAMPLES + FOLDER + "/black.cjp").subsample(20));
-        wiseManOfBablyon.AddSample(new CJPFile().read(USERS_MARKGALEA_DEV_SOURCE_JAVA_IMAGE_FITTING_GA_EXAMPLES + FOLDER + "/yellow_red.cjp").subsample(20));
+        CJPFile targetFile = (CJPFile)(new CJPFile().read(USERS_MARKGALEA_DEV_SOURCE_JAVA_IMAGE_FITTING_GA_EXAMPLES + FOLDER + "/pikachu.cjp").subsample(20,-1));
+        wiseManOfBablyon.AddSample(new CJPFile().read(USERS_MARKGALEA_DEV_SOURCE_JAVA_IMAGE_FITTING_GA_EXAMPLES + FOLDER + "/white.cjp").subsample(20,0));
+        wiseManOfBablyon.AddSample(new CJPFile().read(USERS_MARKGALEA_DEV_SOURCE_JAVA_IMAGE_FITTING_GA_EXAMPLES + FOLDER + "/black.cjp").subsample(20,1));
+        wiseManOfBablyon.AddSample(new CJPFile().read(USERS_MARKGALEA_DEV_SOURCE_JAVA_IMAGE_FITTING_GA_EXAMPLES + FOLDER + "/yellow_red.cjp").subsample(20,2));
         wiseManOfBablyon.SetTargetImage(targetFile);
         targetFile.saveAsPNG(USERS_MARKGALEA_DEV_SOURCE_JAVA_IMAGE_FITTING_GA_EXAMPLES + FOLDER + "/debug/pikachu_small.png");
         wiseManOfBablyon.SetDebugDirectory(USERS_MARKGALEA_DEV_SOURCE_JAVA_IMAGE_FITTING_GA_EXAMPLES + FOLDER + "/debug");

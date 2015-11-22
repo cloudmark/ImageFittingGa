@@ -29,6 +29,7 @@ public class CJPFile extends ImageFile {
     private ImageFile parent;
     public Pixel background = new Pixel(0, 0, 0);
     public String sourceFilename;
+    public int composing_image_id;
 
 
     public CJPFile(int width, int height){
@@ -52,10 +53,11 @@ public class CJPFile extends ImageFile {
         this(0,0);
     }
 
-    public CJPFile(ImageFile parent, int factor) {
+    public CJPFile(ImageFile parent, int factor, int composing_image_id) {
         super();
         this.parent = parent;
         this.factor = factor;
+        this.composing_image_id = composing_image_id;
     }
 
 
@@ -79,7 +81,7 @@ public class CJPFile extends ImageFile {
         if (y1 >= this.row) y1 = this.row - 1;
         if ((x0 > x1) || (y0 > y1))
             throw new NotImplementedException();
-        CJPFile cjp = new CJPFile(null, 1);
+        CJPFile cjp = new CJPFile(null, 1, composing_image_id);
         cjp.column = x1 - x0 + 1;
         cjp.row = y1 - y0 + 1;
         cjp.matrix = new Pixel[cjp.column][cjp.row];
@@ -122,8 +124,8 @@ public class CJPFile extends ImageFile {
     }
 
     @Override
-    public ImageFile subsample(int factor) {
-        CJPFile subcjp = new CJPFile(this, factor);
+    public ImageFile subsample(int factor, int composing_image_id) {
+        CJPFile subcjp = new CJPFile(this, factor, composing_image_id);
         subcjp.parent = this;
         subcjp.sourceFilename = sourceFilename;
         subcjp.column = (int) Math.ceil(this.column / (factor + 0.0));
@@ -153,6 +155,11 @@ public class CJPFile extends ImageFile {
             }
         }
         return answer;
+    }
+
+    @Override
+    public int getComposing_image_id() {
+        return this.composing_image_id;
     }
 
     @Override
@@ -291,8 +298,8 @@ public class CJPFile extends ImageFile {
         return null;
     }
 
-    public static void main(String[] args) {
 
+    public static void main(String[] args) {
 
         System.out.println("!!!!!!!!!!!!!!!!beda!!!!!!!!!!!!!!!!");
         CJPFile cjp = new CJPFile();
@@ -309,7 +316,7 @@ public class CJPFile extends ImageFile {
         }
         System.out.println("Average Pixel: " + AveragePixel(rectanglePixels).toString());
 
-        ImageFile cjpsub20 = cjp.subsample(12);
+        ImageFile cjpsub20 = cjp.subsample(12,0);
         cjpsub20.write("C:\\Users\\james\\Desktop\\GOC\\subsample12.cjp");
         System.out.println("Generated subsample12.cjp file");
         List<Pixel> pyramidPixels = cjpsub20.getPixelsFromPyramid(0, 0, 1);
