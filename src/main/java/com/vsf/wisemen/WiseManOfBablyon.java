@@ -220,7 +220,7 @@ public class WiseManOfBablyon {
 
         // Bootstrap the seeds.
         for (int x = 0; x < targetImage.getWidth(); x++) {
-            for (int y = 0; y < targetImage.getWidth(); y++) {
+            for (int y = 0; y < targetImage.getHeight(); y++) {
                 Pixel p = targetImage.getPixel(x, y);
 
                 if (!p.equals(targetImage.background)) {
@@ -278,14 +278,14 @@ public class WiseManOfBablyon {
 
 
         // If the top left corner is not black we will take it as a background.
-        Pixel topLeft = targetImage.getPixel(0, 0);
-        Pixel topRight = targetImage.getPixel(targetImage.getWidth() - 1, 0);
-        Pixel bottomLeft = targetImage.getPixel(0, targetImage.getHeight() - 1);
-        Pixel bottomRight = targetImage.getPixel(targetImage.getWidth() - 1, targetImage.getHeight() - 1);
+        Pixel topLeft = targetImage.getPixel(1, 1);
+        Pixel topRight = targetImage.getPixel(targetImage.getWidth() - 2, 1);
+        Pixel bottomLeft = targetImage.getPixel(0, targetImage.getHeight() - 2);
+        Pixel bottomRight = targetImage.getPixel(targetImage.getWidth() - 2, targetImage.getHeight() - 2);
         // TODO Check this.
-        boolean imageHasBackground = topLeft.getDistance(topRight) < PIXEL_DISTANCE
-                && topLeft.getDistance(bottomLeft) < PIXEL_DISTANCE
-                && topLeft.getDistance(bottomRight) < PIXEL_DISTANCE;
+        boolean imageHasBackground = topLeft.getDistance(topRight) <= PIXEL_DISTANCE
+                && topLeft.getDistance(bottomLeft) <= PIXEL_DISTANCE
+                && topLeft.getDistance(bottomRight) <= PIXEL_DISTANCE;
         if (imageHasBackground) {
             this.backgroundSeed = new Seed("SBG", 0, 0, targetImage.getWidth(), targetImage.getHeight());
             for (int i = 0; i < targetImage.getWidth(); i++) backgroundSeed.grow(GrowDirection.RIGHT);
@@ -370,7 +370,9 @@ public class WiseManOfBablyon {
 
         GeneticAlgorithm<Chromosome> geneticAlgorithm = geneticAlgorithmConfig.Setup();
         geneticAlgorithm.AddWatcher(((currentGeneration, currentPopulation) -> {
-            new File(debugDirectory).mkdirs();
+            if (debugDirectory != null) {
+                new File(debugDirectory).mkdirs();
+            }
             System.out.println(currentGeneration + "->" + currentPopulation.get(0).score);
             for (int i = 0; i < currentPopulation.size() && i < 10; i++) {
                 Chromosome chromosome = currentPopulation.get(i);
@@ -380,11 +382,6 @@ public class WiseManOfBablyon {
                     fittestChromosome = chromosome;
                 else if (chromosome.score < fittestChromosome.score)
                     fittestChromosome = chromosome;
-
-                CJPFile imageFile = (CJPFile) chromosome.toCJPFile();
-                new File(debugDirectory + "/" + currentGeneration).mkdirs();
-                String PNGFilename = debugDirectory + "/" + currentGeneration + "/" + i + "-" + chromosome.score + ".png";
-                imageFile.saveAsPNG(PNGFilename);
             }
         }));
         return geneticAlgorithm.Evolve(population);
@@ -418,15 +415,13 @@ public class WiseManOfBablyon {
                 Thread.sleep(TIME_TO_RUN);
                 CLGFile outputFile = fittestChromosome.toCLGFile();
                 outputFile.print(collageOutputFileUrl); //print clg file to disk
-                // CJPFile cjpFile = (CJPFile)fittestChromosome.toCJPFile();
-                outputFile.print(collageOutputFileUrl); //print clg file to disk
+                System.exit(-1);
             } catch (Exception e) {
                 e.printStackTrace();
             } finally {
                 CLGFile outputFile = fittestChromosome.toCLGFile();
                 outputFile.print(collageOutputFileUrl); //print clg file to disk
-                // CJPFile cjpFile = (CJPFile)fittestChromosome.toCJPFile();
-                outputFile.print(collageOutputFileUrl); //print clg file to disk
+                System.exit(-1);
             }
         }).start();
 

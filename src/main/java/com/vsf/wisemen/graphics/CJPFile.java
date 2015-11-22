@@ -186,8 +186,6 @@ public class CJPFile extends ImageFile {
         }
         int cnt = 0;
         String curString;
-        System.out.println(raw.size());
-        System.out.println(this.column * this.row);
         if (raw.size() != this.column * this.row) throw new NotImplementedException();
         for (int j = 0; j < this.row; j++) {
             for (int i = 0; i < this.column; i++) {
