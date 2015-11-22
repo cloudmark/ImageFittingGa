@@ -13,7 +13,10 @@ import com.vsf.wisemen.models.Chromosome;
 import com.vsf.wisemen.models.GrowDirection;
 import com.vsf.wisemen.models.Seed;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -22,12 +25,19 @@ public class WiseManOfBablyon {
     private static final String FOLDER = "pikachu";
 
     //final submission variables
+    public static String targetFileNameUrl;
+    public static String compositionImagesUrl;
+    public static String collageOutputFileUrl;
+    public static int rectangleCount;
+    public static int subSampling;
+
     public static Chromosome fittestChromosome = null;
+    public static int timeToRun = 57000; //57 seconds
     public static int GENERATIONS = 1000000;
+
 
     private String debugDirectory = null;
     private int seeds;
-    private int rectangleCount;
     private int populationCount;
     List<ImageFile> samples = new ArrayList<>();
     ImageFile targetImage = null;
@@ -389,31 +399,75 @@ public class WiseManOfBablyon {
 
 
     public static void main(String[] args) {
-        final int timeToRun = 57000;
 
-        WiseManOfBablyon wiseManOfBablyon = new WiseManOfBablyon(11, 5, 1000, 0.01, 0.6);
-        CJPFile targetFile = (CJPFile) (new CJPFile().read("/Users/markgalea/Dev/Source/Java/ImageFittingGA/examples/marilyn/marilyn.cjp").subsample(15,-1));
-        wiseManOfBablyon.AddSample(new CJPFile().read("/Users/markgalea/Dev/Source/Java/ImageFittingGA/examples/marilyn/whiteSample.cjp").subsample(15,0));
-        wiseManOfBablyon.AddSample(new CJPFile().read("/Users/markgalea/Dev/Source/Java/ImageFittingGA/examples/marilyn/blackSample.cjp").subsample(15,1));
-        wiseManOfBablyon.AddSample(new CJPFile().read("/Users/markgalea/Dev/Source/Java/ImageFittingGA/examples/marilyn/redSample.cjp").subsample(15,2));
-        wiseManOfBablyon.AddSample(new CJPFile().read("/Users/markgalea/Dev/Source/Java/ImageFittingGA/examples/marilyn/yellowSample.cjp").subsample(15,3));
-        wiseManOfBablyon.SetTargetImage(targetFile);
-        targetFile.saveAsPNG("/Users/markgalea/Dev/Source/Java/ImageFittingGA/examples/marilyn/debug/marilyn_small.png");
-        wiseManOfBablyon.SetDebugDirectory("/Users/markgalea/Dev/Source/Java/ImageFittingGA/examples/marilyn/debug");
+        if (args.length != 9) { //4 according to spec and 5 ours
+            System.out.println("Error: Missing command line arguments. Arguments should be as follows: " +
+                    "targetFileNameUrl,compositionImagesUrl, rectangleCount, collageOutputFileUrl, " +
+                    "seedFactor, populationCount, mutationRate, crossOverRate, subSampling");
+            System.exit(-1);
+        }
+
+        targetFileNameUrl = args[0];
+        compositionImagesUrl = args[1];
+        rectangleCount = Integer.parseInt(args[2]);
+        collageOutputFileUrl = args[3];
+        int seedFactor = Integer.parseInt(args[4]);
+        int populationCount = Integer.parseInt(args[5]);
+        double mutationRate = Double.parseDouble(args[6]);
+        double crossOverRate = Double.parseDouble(args[7]);
+        subSampling = Integer.parseInt(args[8]);
 
         //Programming competition timer
         new Thread(()-> {
             try {
                 Thread.sleep(timeToRun);
                 CLGFile outputFile = fittestChromosome.toCLGFile();
-                outputFile.print(wiseManOfBablyon.debugDirectory +  "collage_output_file.clg"); //print clg file to disk
+                outputFile.print(collageOutputFileUrl); //print clg file to disk
             } catch (Exception e) {
                 e.printStackTrace();
             } finally {
                 CLGFile outputFile = fittestChromosome.toCLGFile();
-                outputFile.print(wiseManOfBablyon.debugDirectory +  "collage_output_file.clg"); //print clg file to disk
+                outputFile.print(collageOutputFileUrl); //print clg file to disk
             }
         }).start();
+
+        //logic starts here
+        WiseManOfBablyon wiseManOfBablyon = new WiseManOfBablyon(rectangleCount, seedFactor, populationCount, mutationRate, crossOverRate);
+
+        //load target file
+        CJPFile targetFile = (CJPFile) (new CJPFile().read(targetFileNameUrl).subsample(subSampling,-1));
+        wiseManOfBablyon.SetTargetImage(targetFile);
+
+        //load sample files
+        BufferedReader br = null;
+        try {
+            String sCurrentLine;
+            br = new BufferedReader(new FileReader(compositionImagesUrl));
+            int i = 0;
+            while ((sCurrentLine = br.readLine()) != null) {
+                wiseManOfBablyon.AddSample(new CJPFile().read(sCurrentLine).subsample(subSampling,i));
+                i++;
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (br != null)br.close();
+            } catch (IOException ex) {
+                ex.printStackTrace();
+            }
+        }
+
+        //TODO to be removed underneath----------------------------------------------??
+
+        wiseManOfBablyon.AddSample(new CJPFile().read("/Users/markgalea/Dev/Source/Java/ImageFittingGA/examples/marilyn/whiteSample.cjp").subsample(15,0));
+        wiseManOfBablyon.AddSample(new CJPFile().read("/Users/markgalea/Dev/Source/Java/ImageFittingGA/examples/marilyn/blackSample.cjp").subsample(15,1));
+        wiseManOfBablyon.AddSample(new CJPFile().read("/Users/markgalea/Dev/Source/Java/ImageFittingGA/examples/marilyn/redSample.cjp").subsample(15,2));
+        wiseManOfBablyon.AddSample(new CJPFile().read("/Users/markgalea/Dev/Source/Java/ImageFittingGA/examples/marilyn/yellowSample.cjp").subsample(15,3));
+
+
+        targetFile.saveAsPNG("/Users/markgalea/Dev/Source/Java/ImageFittingGA/examples/marilyn/debug/marilyn_small.png");
+        wiseManOfBablyon.SetDebugDirectory("/Users/markgalea/Dev/Source/Java/ImageFittingGA/examples/marilyn/debug");
 
 
 //        CJPFile targetFile = (CJPFile)(new CJPFile().read(USERS_MARKGALEA_DEV_SOURCE_JAVA_IMAGE_FITTING_GA_EXAMPLES + FOLDER + "/pikachu.cjp").subsample(10));
@@ -431,6 +485,9 @@ public class WiseManOfBablyon {
 //        wiseManOfBablyon.SetDebugDirectory("/Users/markgalea/Dev/Source/Java/ImageFittingGA/examples/franceFlag/debug");
 
         System.out.println("===============================================");
+
+        //TODO ------ remove till here
+
         Chromosome chromosome = wiseManOfBablyon.Compute();
         System.out.println(chromosome.toString());
     }
