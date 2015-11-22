@@ -13,6 +13,7 @@ public class Chromosome {
     public int height;
     public List<Seed> seeds;
     public double score;
+    public double scoreWithPenality;
 
     public Chromosome(int width, int height) {
     this.width =width;

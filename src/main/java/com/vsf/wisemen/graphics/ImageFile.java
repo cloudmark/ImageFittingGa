@@ -1,6 +1,7 @@
 package com.vsf.wisemen.graphics;
 
 
+import com.vsf.ga.functions.Tuple;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.util.ArrayList;
@@ -63,10 +64,8 @@ public abstract class ImageFile {
     }
 
     public SimilarityResult findBestFittingImage(int sx, int sy, int width, int height, List<ImageFile> samples) {
-        // TODO: Do not go to the very end...
         List<SimilarityResult> globalBest = new ArrayList<>();
         for (ImageFile sample : samples) {
-//            System.out.println("Looking @ [" + ((CJPFile)sample).sourceFilename + "]");
             SimilarityResult localBest = new SimilarityResult();
             for( int tx = 0; tx < sample.getWidth(); tx++) {
                 for( int ty = 0; ty < sample.getHeight(); ty++) {
@@ -74,7 +73,6 @@ public abstract class ImageFile {
                     if (curr <= localBest.score) {
                         localBest.score = curr;
                         localBest.bestFittingSample = sample;
-//                        System.out.println("\t" + curr);
                     }
                 }
             }
@@ -82,5 +80,9 @@ public abstract class ImageFile {
         }
         globalBest.sort((x, y) -> new Double(x.score).compareTo(y.score));
         return globalBest.get(0);
+    }
+
+    public Tuple<Integer, Double> overlapPercentage(){
+        return new Tuple<>(0,0.0);
     }
 }

@@ -1,5 +1,6 @@
 package com.vsf.wisemen.graphics;
 
+import com.vsf.ga.functions.Tuple;
 import com.vsf.wisemen.utils.CJP;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -24,9 +25,9 @@ public class CJPFile extends ImageFile {
     private int column;
     private int factor;
     private Pixel[][] matrix;
-    private boolean[][] pastes;
+    private int[][] pastes;
     private ImageFile parent;
-    private Pixel background = new Pixel(0, 0, 0);
+    public Pixel background = new Pixel(0, 0, 0);
     public String sourceFilename;
 
 
@@ -36,11 +37,15 @@ public class CJPFile extends ImageFile {
         this.parent = null;
         this.factor = 1;
         this.matrix = new Pixel[width][height];
-        for(int x = 0; x < width; x++){
-            for(int y = 0; y< height; y++){
+        for(int x = 0; x < width; x++)
+            for(int y = 0; y< height; y++)
                 this.matrix[x][y] = background;
-            }
-        }
+
+        this.pastes = new int[width][height];
+        for(int x = 0; x < width; x++)
+            for(int y = 0; y< height; y++)
+                this.pastes[x][y] = 0;
+
     }
 
     public CJPFile(){
@@ -48,15 +53,15 @@ public class CJPFile extends ImageFile {
     }
 
     public CJPFile(ImageFile parent, int factor) {
+        super();
         this.parent = parent;
         this.factor = factor;
-        //Arrays.fill(pastes,false);
     }
 
 
     @Override
     public ImageFile getParent() {
-        return null;
+        return this.parent;
     }
 
     @Override
@@ -219,9 +224,27 @@ public class CJPFile extends ImageFile {
         for (int i = 0; i < img.column; i++) {
             for (int j = 0; j < img.row; j++) {
                 this.matrix[x+i][y+j] = img.matrix[i][j];
+                if (!this.matrix[x+i][y+j].equals(img.matrix[i][j])){
+                    pastes[x+i][y+j] += 1;
+                }
             }
         }
+    }
 
+    @Override
+    public Tuple<Integer, Double> overlapPercentage(){
+        int atLeast1 = 0;
+        int moreThan1 = 0;
+        for(int x = 0; x < this.getWidth(); x++) {
+            for (int y = 0; y < this.getHeight(); y++) {
+                if(this.pastes[x][y] != 0){
+                    if (this.pastes[x][y] >= 1) atLeast1 ++;
+                    if (this.pastes[x][y] >= 2) moreThan1++;
+                }
+            }
+        }
+        double overlap = (atLeast1 == 0) ? 0:  (moreThan1 / atLeast1);
+        return new Tuple<>(moreThan1, overlap);
     }
 
     // TODO: Fix Parameter Flips
@@ -264,6 +287,9 @@ public class CJPFile extends ImageFile {
 
     }
 
+    public CLGFile quantize(int maxColours){
+        return null;
+    }
 
     public static void main(String[] args) {
 

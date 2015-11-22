@@ -38,7 +38,7 @@ public class GeneticAlgorithm<GS> {
                 .map((x) -> new Tuple<>(x, config.scoringOperator.score(currentGeneration, x)))
                 .collect(Collectors.toMap(Tuple::getFirst, Tuple::getSecond));
         currentPopulation.sort((x, y) -> scoreCache.get(x).compareTo(scoreCache.get(y)));
-        return currentPopulation.subList(0, config.initialPopulationCount - 1);
+        return currentPopulation.subList(0, config.initialPopulationCount);
     }
 
     private List<GS> mutate(int currentGeneration, List<GS> sourcePopulation) {
@@ -62,12 +62,13 @@ public class GeneticAlgorithm<GS> {
         int currentPopulationCount = sourcePopulation.size();
         int populationSplit = (int) Math.floor(currentPopulationCount * config.crossOverRate);
         for (int i = 0; i < populationSplit; i++) {
-            int mumIndex = random.nextInt(populationSplit);
-            int dadIndex = random.nextInt(populationSplit);
+            int mumIndex = random.nextInt(currentPopulationCount);
+            // Dad could be a bad speciment
+            int dadIndex = random.nextInt(currentPopulationCount);
             GS mum = sourcePopulation.get(mumIndex);
             GS dad = sourcePopulation.get(dadIndex);
-            config.crossOverOperators.parallelStream().forEach((crossOverOperator) -> {
-                Tuple<GS, GS> childrenTuple = crossOverOperator.crossOver(currentGeneration, mum, dad, config.crossOverChromosomePercentage);
+            config.crossOverOperators.stream().forEach((crossOverOperator) -> {
+                Tuple<GS, GS> childrenTuple = crossOverOperator.crossOver(currentGeneration, mum, dad);
                 population.add(childrenTuple.getFirst());
                 population.add(childrenTuple.getSecond());
             });

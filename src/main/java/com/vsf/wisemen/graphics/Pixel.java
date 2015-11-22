@@ -1,13 +1,9 @@
 package com.vsf.wisemen.graphics;
 
-import com.vsf.wisemen.utils.Utils;
-import lombok.Data;
-
-@Data
 public class Pixel {
-    int r;
-    int g;
-    int b;
+    public int r;
+    public int g;
+    public int b;
 
     public Pixel(int r, int g, int b){
         this.r = r;
@@ -38,4 +34,9 @@ public class Pixel {
         return rstr + gstr + bstr;
     }
 
+    @Override
+    public boolean equals(Object obj) {
+        Pixel that = (Pixel)obj;
+        return this.r == that.r && this.g == that.g && this.b == that.b;
+    }
 }

@@ -9,7 +9,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class GeneticAlgorithmConfig<GS> {
-    public double crossOverChromosomePercentage = 0.5;
     public double mutationRate = 0.4;
     public double crossOverRate = 0.4;
     public int initialPopulationCount;
@@ -18,8 +17,7 @@ public class GeneticAlgorithmConfig<GS> {
     ScoringFunction<GS> scoringOperator = null;
     GoodEnoughCondition<GS> isGoodEnough = null;
 
-    public GeneticAlgorithmConfig(int initialPopulationCount, double crossOverChromosomePercentage, double crossOverRate,  double mutationRate) {
-        this.crossOverChromosomePercentage = crossOverChromosomePercentage;
+    public GeneticAlgorithmConfig(int initialPopulationCount, double crossOverRate,  double mutationRate) {
         this.crossOverRate = crossOverRate;
         this.mutationRate = mutationRate;
         this.initialPopulationCount = initialPopulationCount;

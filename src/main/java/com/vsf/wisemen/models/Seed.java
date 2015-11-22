@@ -93,7 +93,7 @@ public class Seed {
     public String toString() {
         String growthString = "";
         for (GrowDirection g : growth) {
-            growthString += g.name();
+            growthString += g.name().substring(0,1);
         }
         return this.name + "- (" + x + "," + y + ") [" + width + "," + height + "] [" + growthString + "]";
     }
