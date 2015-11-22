@@ -34,6 +34,7 @@ public class WiseManOfBablyon {
     public static Chromosome fittestChromosome = null;
     public static int timeToRun = 57000; //57 seconds
     public static int GENERATIONS = 1000000;
+    public static int PIXEL_DISTANCE;
 
 
     private String debugDirectory = null;
@@ -286,8 +287,10 @@ public class WiseManOfBablyon {
         Pixel bottomLeft = targetImage.getPixel(0, targetImage.getHeight() - 1);
         Pixel bottomRight = targetImage.getPixel(targetImage.getWidth() - 1, targetImage.getHeight() - 1);
         // TODO Check this.
-        boolean isThereBackground = topLeft.equals(topRight) && topLeft.equals(bottomLeft) && topLeft.equals(bottomRight);
-        if (true) {
+        boolean imageHasBackground = topLeft.getDistance(topRight) < PIXEL_DISTANCE
+                && topLeft.getDistance(bottomLeft) < PIXEL_DISTANCE
+                && topLeft.getDistance(bottomRight) < PIXEL_DISTANCE;
+        if (imageHasBackground) {
             this.backgroundSeed = new Seed("SBG", 0, 0, targetImage.getWidth(), targetImage.getHeight());
             for (int i = 0; i < targetImage.getWidth(); i++) backgroundSeed.grow(GrowDirection.RIGHT);
             for (int j = 0; j < targetImage.getHeight(); j++) backgroundSeed.grow(GrowDirection.BOTTOM);
@@ -400,10 +403,10 @@ public class WiseManOfBablyon {
 
     public static void main(String[] args) {
 
-        if (args.length != 9) { //4 according to spec and 5 ours
+        if (args.length != 10) { //4 according to spec and 5 ours
             System.out.println("Error: Missing command line arguments. Arguments should be as follows: " +
                     "targetFileNameUrl,compositionImagesUrl, rectangleCount, collageOutputFileUrl, " +
-                    "seedFactor, populationCount, mutationRate, crossOverRate, subSampling");
+                    "seedFactor, populationCount, mutationRate, crossOverRate, subSampling, pixelDistance");
             System.exit(-1);
         }
 
@@ -416,6 +419,7 @@ public class WiseManOfBablyon {
         double mutationRate = Double.parseDouble(args[6]);
         double crossOverRate = Double.parseDouble(args[7]);
         subSampling = Integer.parseInt(args[8]);
+        PIXEL_DISTANCE = Integer.parseInt(args[9]);
 
         //Programming competition timer
         new Thread(()-> {
