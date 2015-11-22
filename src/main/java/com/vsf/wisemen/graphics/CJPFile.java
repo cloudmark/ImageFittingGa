@@ -36,7 +36,7 @@ public class CJPFile extends ImageFile {
         this.row = height;
         this.column = width;
         this.parent = null;
-        this.factor = 1;
+        this.setFactor(1);
         this.matrix = new Pixel[width][height];
         for(int x = 0; x < width; x++)
             for(int y = 0; y< height; y++)
@@ -56,7 +56,7 @@ public class CJPFile extends ImageFile {
     public CJPFile(ImageFile parent, int factor, int composing_image_id) {
         super();
         this.parent = parent;
-        this.factor = factor;
+        this.setFactor(factor);
         this.composing_image_id = composing_image_id;
     }
 
@@ -149,8 +149,8 @@ public class CJPFile extends ImageFile {
             add(getPixel(x, y));
         }};
         List<Pixel> answer = new ArrayList<Pixel>();
-        for (int i = x * factor; i < x * factor + (factor); i++) {
-            for (int j = y * factor; j < y * factor + (factor); j++) {
+        for (int i = x * getFactor(); i < x * getFactor() + (getFactor()); i++) {
+            for (int j = y * getFactor(); j < y * getFactor() + (getFactor()); j++) {
                 answer.addAll(this.parent.getPixelsFromPyramid(i, j, stepsback - 1));
             }
         }
@@ -200,7 +200,7 @@ public class CJPFile extends ImageFile {
             }
         }
         this.parent = null;
-        this.factor = 1;
+        this.setFactor(1);
         return this;
     }
 
@@ -327,4 +327,11 @@ public class CJPFile extends ImageFile {
 
     }
 
+    public int getFactor() {
+        return factor;
+    }
+
+    public void setFactor(int factor) {
+        this.factor = factor;
+    }
 }

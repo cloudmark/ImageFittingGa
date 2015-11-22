@@ -12,8 +12,6 @@ public abstract class ImageFile {
 
     public abstract ImageFile getParent();
 
-
-
     public abstract Pixel getPixel(int x, int y);
 
     public abstract ImageFile subsample(int factor, int composing_image_id);
@@ -21,6 +19,8 @@ public abstract class ImageFile {
     public List<Pixel> getPixelsFromPyramid(int x, int y, int stepsback){
         throw new UnsupportedOperationException();
     }
+
+    public abstract int getFactor();
 
     public abstract int getComposing_image_id();
 
