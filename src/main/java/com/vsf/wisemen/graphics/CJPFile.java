@@ -124,8 +124,8 @@ public class CJPFile extends ImageFile {
     }
 
     @Override
-    public ImageFile subsample(int factor, int composing_image_id) {
-        CJPFile subcjp = new CJPFile(this, factor, composing_image_id);
+    public ImageFile subsample(int factor, int composingImageId) {
+        CJPFile subcjp = new CJPFile(this, factor, composingImageId);
         subcjp.parent = this;
         subcjp.sourceFilename = sourceFilename;
         subcjp.column = (int) Math.ceil(this.column / (factor + 0.0));
@@ -158,7 +158,7 @@ public class CJPFile extends ImageFile {
     }
 
     @Override
-    public int getComposing_image_id() {
+    public int getComposingImageId() {
         return this.composing_image_id;
     }
 
@@ -230,9 +230,9 @@ public class CJPFile extends ImageFile {
     public void paste(int x, int y, CJPFile img){
         for (int i = 0; i < img.column; i++) {
             for (int j = 0; j < img.row; j++) {
-                this.matrix[x+i][y+j] = img.matrix[i][j];
-                if (!this.matrix[x+i][y+j].equals(img.matrix[i][j])){
-                    pastes[x+i][y+j] += 1;
+                this.matrix[x + i][y + j] = img.matrix[i][j];
+                if (!this.matrix[x + i][y + j].equals(img.matrix[i][j])) {
+                    pastes[x + i][y + j] += 1;
                 }
             }
         }
@@ -257,8 +257,12 @@ public class CJPFile extends ImageFile {
     // TODO: Fix Parameter Flips
     @Override
     public void compose(int tx, int ty, CJPFile compositeFile, int sx, int sy, int width, int height){
-        CJPFile rectangle = compositeFile.getRectangle(sx,sy,sx+width-1,sy+height-1);
-        this.paste(tx, ty, rectangle);
+        try {
+            CJPFile rectangle = compositeFile.getRectangle(sx, sy, sx + width - 1, sy + height - 1);
+            this.paste(tx, ty, rectangle);
+        }catch(Exception e){
+            System.out.println(e);
+        }
     }
 
 

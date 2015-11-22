@@ -15,8 +15,7 @@ public class Seed {
     public int imageWidth;
     public int imageHeight;
     public SimilarityResult similarityResult;
-
-    List<GrowDirection> growth;
+    public List<GrowDirection> growth;
     public Seed(String name, int x, int y, int imageWidth, int imageHeight) {
         this.name = name;
         this.originalX = x;
@@ -31,13 +30,14 @@ public class Seed {
         this.similarityResult = null;
     }
 
-    public void grow(GrowDirection growDirection) {
+    public boolean grow(GrowDirection growDirection) {
         switch (growDirection) {
             case TOP: {
                 if (y > 0) {
                     this.growth.add(growDirection);
                     this.y--;
                     this.height++;
+                    return true;
                 }
                 break;
             }
@@ -47,6 +47,7 @@ public class Seed {
                     this.growth.add(growDirection);
                     this.x--;
                     this.width++;
+                    return true;
                 }
                 break;
 
@@ -54,6 +55,7 @@ public class Seed {
                 if (this.x + this.width < this.imageWidth) {
                     this.growth.add(growDirection);
                     this.width++;
+                    return true;
                 }
                 break;
 
@@ -61,19 +63,24 @@ public class Seed {
                 if (this.y + this.height < this.imageHeight) {
                     this.growth.add(growDirection);
                     this.height++;
+                    return true;
                 }
                 break;
             }
         }
+        return false;
     }
 
     public void recalculate() {
         List<GrowDirection> oldGrowth = growth;
         growth = new ArrayList<>();
-        this.width = 0;
-        this.height = 0;
+        this.width = 1;
+        this.height = 1;
+        this.similarityResult = null;
         for (GrowDirection growth : oldGrowth) {
-            this.grow(growth);
+            if (!this.grow(growth)){
+                break;
+            }
         }
     }
 
@@ -82,8 +89,7 @@ public class Seed {
         clone.width = this.width;
         clone.height = this.height;
         clone.similarityResult = null;
-
-        clone.growth = this.growth.parallelStream().collect(Collectors.toList());
+        clone.growth = this.growth.stream().collect(Collectors.toList());
 
         this.similarityResult = null;
         return clone;

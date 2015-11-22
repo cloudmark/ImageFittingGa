@@ -72,8 +72,7 @@ public class Chromosome {
                 realheight = curImgFile.getParent().getHeight() - curSeed.originalY*factor;
             }
 
-
-            CLGFileEntry clgentry = new CLGFileEntry(curImgFile.getComposing_image_id(),
+            CLGFileEntry clgentry = new CLGFileEntry(curImgFile.getComposingImageId(),
                     curSeed.originalX*factor,curSeed.originalY*factor, realwidth,realheight,
                     curSimResult.tx*factor,curSimResult.ty*factor);
             clgFile.entries.add(clgentry);

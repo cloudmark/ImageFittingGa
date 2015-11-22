@@ -1,6 +1,8 @@
 package com.vsf.ga;
 
 import com.vsf.ga.functions.*;
+import com.vsf.wisemen.models.Chromosome;
+
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -24,10 +26,12 @@ public class GeneticAlgorithm<GS> {
         while (!config.isGoodEnough.cond(currentGeneration, currentBestScore, currentPopulation)) {
             final int currentGenerationFinal = currentGeneration;
             currentPopulation = prunePopulation(currentGeneration, currentPopulation);
-            final List<GS> currentPopulationFinal = currentPopulation;
-            feedbacks.forEach((x) -> x.feedback(currentGenerationFinal, currentPopulationFinal));
+            final List<GS> currentFinalPopulation = currentPopulation;
+            feedbacks.forEach((x) -> x.feedback(currentGenerationFinal, currentFinalPopulation));
             currentPopulation = crossover(currentGeneration, currentPopulation);
+            if (currentPopulation.size() < config.initialPopulationCount) throw new AssertionError();
             currentPopulation = mutate(currentGeneration, currentPopulation);
+            if (currentPopulation.size() < config.initialPopulationCount) throw new AssertionError();
             currentGeneration++;
         }
         return currentPopulation.get(0);
@@ -36,6 +40,7 @@ public class GeneticAlgorithm<GS> {
     private List<GS> prunePopulation(int currentGeneration, List<GS> currentPopulation) {
         Map<GS, Double> scoreCache = currentPopulation.stream()
                 .map((x) -> new Tuple<>(x, config.scoringOperator.score(currentGeneration, x)))
+                .distinct()
                 .collect(Collectors.toMap(Tuple::getFirst, Tuple::getSecond));
         currentPopulation.sort((x, y) -> scoreCache.get(x).compareTo(scoreCache.get(y)));
         return currentPopulation.subList(0, config.initialPopulationCount);
@@ -43,17 +48,17 @@ public class GeneticAlgorithm<GS> {
 
     private List<GS> mutate(int currentGeneration, List<GS> sourcePopulation) {
         List<GS> population = new ArrayList<>(sourcePopulation.size());
-        sourcePopulation.parallelStream().forEach((chromosome) -> {
+        sourcePopulation.stream().forEach((chromosome) -> {
             if (random.nextDouble() < config.mutationRate) {
-                GS mutatedChromosome = chromosome;
-                MutationOperator<GS> mutationOperator = config.mutationOperators.get(random.nextInt(config.mutationOperators.size()));
-                mutatedChromosome = mutationOperator.mutate(currentGeneration, mutatedChromosome);
+                int mutationsOperatorCount = config.mutationOperators.size();
+                MutationOperator<GS> mutationOperator = config.mutationOperators.get(random.nextInt(mutationsOperatorCount));
+                GS mutatedChromosome = mutationOperator.mutate(currentGeneration, chromosome);
                 population.add(mutatedChromosome);
             } else {
                 population.add(chromosome);
             }
         });
-        return population;
+        return population.stream().distinct().collect(Collectors.toList());
     }
 
     private List<GS> crossover(int currentGeneration, List<GS> sourcePopulation) {
@@ -62,9 +67,8 @@ public class GeneticAlgorithm<GS> {
         int currentPopulationCount = sourcePopulation.size();
         int populationSplit = (int) Math.floor(currentPopulationCount * config.crossOverRate);
         for (int i = 0; i < populationSplit; i++) {
-            int mumIndex = random.nextInt(currentPopulationCount);
-            // Dad could be a bad speciment
-            int dadIndex = random.nextInt(currentPopulationCount);
+            int mumIndex = random.nextInt(populationSplit);
+            int dadIndex = random.nextInt(populationSplit);
             GS mum = sourcePopulation.get(mumIndex);
             GS dad = sourcePopulation.get(dadIndex);
             config.crossOverOperators.stream().forEach((crossOverOperator) -> {
@@ -73,6 +77,6 @@ public class GeneticAlgorithm<GS> {
                 population.add(childrenTuple.getSecond());
             });
         }
-        return population;
+        return population.stream().distinct().collect(Collectors.toList());
     }
 }

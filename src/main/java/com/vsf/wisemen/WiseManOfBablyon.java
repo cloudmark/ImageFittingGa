@@ -3,6 +3,7 @@ package com.vsf.wisemen;
 import com.vsf.ga.GeneticAlgorithm;
 import com.vsf.ga.GeneticAlgorithmConfig;
 import com.vsf.ga.functions.CrossOverOperator;
+import com.vsf.ga.functions.MutationOperator;
 import com.vsf.ga.functions.Tuple;
 import com.vsf.wisemen.graphics.CJPFile;
 import com.vsf.wisemen.graphics.CLGFile;
@@ -36,6 +37,8 @@ public class WiseManOfBablyon {
     private Map<String, Seed> mutationSeedCache = new HashMap<>();
     private GeneticAlgorithmConfig<Chromosome> geneticAlgorithmConfig;
     private Seed backgroundSeed = null;
+    // We will leave 3 seconds for output.
+    private long terminationTime = System.currentTimeMillis() + 57000;
 
     CrossOverOperator<Chromosome> CrossOverOperatorAB_CD_AD_CB = (int currentGeneration, Chromosome mum, Chromosome dad) -> {
         List<Seed> seedUnion = new ArrayList<>();
@@ -58,7 +61,135 @@ public class WiseManOfBablyon {
 
     };
 
+    MutationOperator<Chromosome> RandomSeedMutationInGrowthArrayChromosome = (int currentGeneration, Chromosome chromosome) -> {
+        Chromosome mutantChromosome = chromosome.clone();
 
+        List<Tuple<Integer, Seed>> whichSeeds = new ArrayList<>();
+        List<Seed> whichRawSeeds = new ArrayList<>();
+        int mutantSeeds = chromosome.seeds.size() - (chromosome.seeds.size() / 3);
+        while (whichSeeds.size() != mutantSeeds) {
+            int index = random.nextInt(mutantChromosome.seeds.size());
+            Seed currentWhichSeed = mutantChromosome.seeds.get(index);
+            if (!whichRawSeeds.contains(currentWhichSeed)) {
+                whichSeeds.add(new Tuple<>(index, currentWhichSeed));
+                whichRawSeeds.add(currentWhichSeed);
+            }
+        }
+
+        for (Tuple<Integer, Seed> tuple : whichSeeds) {
+            Seed seed = tuple.getSecond();
+            if (seed.growth.size() > 5) {
+                seed.growth.set(random.nextInt(seed.growth.size()), randomDirection());
+                seed.recalculate();
+            } else {
+                seed.grow(randomDirection());
+            }
+        }
+        return mutantChromosome;
+    };
+
+    MutationOperator<Chromosome> SeedSwapper = (int currentGeneration, Chromosome chromosome) -> {
+        Chromosome mutationChromosome = chromosome.clone();
+        // This swaps two seeds in the the chromosome
+        int sourceInt = random.nextInt(chromosome.seeds.size());
+        int destinationInt = random.nextInt(chromosome.seeds.size());
+        Seed sourceSeed = mutationChromosome.seeds.get(sourceInt);
+        Seed destinationSeed = mutationChromosome.seeds.get(destinationInt);
+        mutationChromosome.seeds.set(destinationInt, sourceSeed);
+        mutationChromosome.seeds.set(sourceInt, destinationSeed);
+        return mutationChromosome;
+    };
+
+    MutationOperator<Chromosome> GrowthMutation = (int currentGeneration, Chromosome chromosome) -> {
+        Chromosome mutantChromosome = chromosome.clone();
+        List<Tuple<Integer, Seed>> whichSeeds = new ArrayList<>();
+        List<Seed> whichRawSeeds = new ArrayList<>();
+        int mutantSeeds = chromosome.seeds.size() - (chromosome.seeds.size() / 3);
+        while (whichSeeds.size() != mutantSeeds) {
+            int index = random.nextInt(mutantChromosome.seeds.size());
+            Seed currentWhichSeed = mutantChromosome.seeds.get(index);
+            if (!whichRawSeeds.contains(currentWhichSeed)) {
+                whichSeeds.add(new Tuple<>(index, currentWhichSeed));
+                whichRawSeeds.add(currentWhichSeed);
+            }
+        }
+
+        for (Tuple<Integer, Seed> tuple : whichSeeds) {
+            int index = tuple.getFirst();
+            Seed seed = tuple.getSecond();
+            int directionCount = 3 - random.nextInt(2);
+            for (int direction = 0; direction < directionCount; direction++) {
+                seed.grow(randomDirection());
+            }
+
+            String key = seed.toString();
+            if (mutationSeedCache.containsKey(key)) {
+                chromosome.seeds.set(index, mutationSeedCache.get(key));
+            } else {
+                mutationSeedCache.put(key, seed);
+            }
+        }
+
+        return mutantChromosome;
+    };
+
+    MutationOperator<Chromosome> TranslationMutation = (int currentGeneration, Chromosome chromosome) -> {
+        Chromosome mutationChromosome = chromosome.clone();
+        List<Tuple<Integer, Seed>> whichSeeds = new ArrayList<>();
+        List<Seed> whichRawSeeds = new ArrayList<>();
+        int mutantSeeds = 2;
+        while (whichSeeds.size() != mutantSeeds) {
+            int index = random.nextInt(mutationChromosome.seeds.size());
+            Seed currentWhichSeed = mutationChromosome.seeds.get(index);
+            if (!whichRawSeeds.contains(currentWhichSeed)) {
+                whichSeeds.add(new Tuple<>(index, currentWhichSeed));
+                whichRawSeeds.add(currentWhichSeed);
+            }
+        }
+
+        for (Tuple<Integer, Seed> tuple : whichSeeds) {
+            Seed seed = tuple.getSecond();
+            Integer index = tuple.getFirst();
+            Seed mutatedSeed = seed.clone();
+            mutatedSeed.x += random.nextInt(11) - 5;
+            mutatedSeed.y += random.nextInt(11) - 5;
+            if (mutatedSeed.x < 0) mutatedSeed.x = 0;
+            if (mutatedSeed.x > mutatedSeed.imageWidth - 1) mutatedSeed.x = mutatedSeed.imageWidth - 1;
+            if (mutatedSeed.y < 0) mutatedSeed.y = 0;
+            if (mutatedSeed.y > mutatedSeed.imageHeight - 1) mutatedSeed.y = mutatedSeed.imageHeight - 1;
+            mutatedSeed.recalculate();
+            mutationChromosome.seeds.set(index, mutatedSeed);
+        }
+        return mutationChromosome;
+    };
+
+    MutationOperator<Chromosome> RandomSeeds = (int currentGeneration, Chromosome chromosome) -> {
+        Chromosome mutationChromosome = chromosome.clone();
+        List<Tuple<Integer, Seed>> whichSeeds = new ArrayList<>();
+        List<Seed> whichRawSeeds = new ArrayList<>();
+        int mutantSeeds = 1;
+        while (whichSeeds.size() != mutantSeeds) {
+            int index = random.nextInt(mutationChromosome.seeds.size());
+            Seed currentWhichSeed = mutationChromosome.seeds.get(index);
+            if (!whichRawSeeds.contains(currentWhichSeed)) {
+                whichSeeds.add(new Tuple<>(index, currentWhichSeed));
+                whichRawSeeds.add(currentWhichSeed);
+            }
+        }
+
+        for (Tuple<Integer, Seed> tuple : whichSeeds) {
+            Integer index = tuple.getFirst();
+            Seed seed = seedBank.get(random.nextInt(seedBank.size())).clone();
+            if (currentGeneration != 0) {
+                int growthLength = random.nextInt(currentGeneration);
+                for (int i = 0; i < growthLength; i++) {
+                    seed.grow(randomDirection());
+                }
+            }
+            mutationChromosome.seeds.set(index, seed);
+        }
+        return mutationChromosome;
+    };
 
     public void AddSample(ImageFile imageFile) {
         this.samples.add(imageFile);
@@ -66,7 +197,9 @@ public class WiseManOfBablyon {
 
     public void SetTargetImage(CJPFile targetImage) {
         this.targetImage = targetImage;
-        int totalColors = 65535;
+//        int totalColors = 65535;
+//        int totalColors = 255;
+        int totalColors = 255 + 255 + 255;
         double totalPixels = 0;
         int mod = totalColors / seeds;
         mod = (mod == 0) ? 1 : mod;
@@ -79,13 +212,14 @@ public class WiseManOfBablyon {
 
 
         // Bootstrap the seeds.
-        for(int x = 0; x < targetImage.getWidth(); x++){
-            for(int y = 0; y < targetImage.getWidth(); y++) {
+        for (int x = 0; x < targetImage.getWidth(); x++) {
+            for (int y = 0; y < targetImage.getWidth(); y++) {
                 Pixel p = targetImage.getPixel(x, y);
 
                 if (!p.equals(targetImage.background)) {
-                    //  int bin = ((int)Math.floor(0.2989 * p.r + 0.5870 * p.g+ 0.1140 * p.b)) % mod;
-                    int bin = (p.r << 16 | p.g << 8 | p.b) % mod;
+                    // int bin = ((int)Math.floor(0.2989 * p.r + 0.5870 * p.g+ 0.1140 * p.b)) % mod;
+                    // int bin = (p.r << 16 | p.g << 8 | p.b) % mod;
+                    int bin = (p.r + p.g + p.b) % mod;
                     bins.get(bin).add(new Tuple<>(x, y));
                     totalPixels++;
                 }
@@ -95,10 +229,10 @@ public class WiseManOfBablyon {
 
         // First try to take seeds from the bucket.
         int used = 0;
-        for(int i = mod - 1; i >= 0 && used < seeds; i--){
+        for (int i = mod - 1; i >= 0 && used < seeds; i--) {
             int totalInBin = bins.get(i).size();
-            if (totalInBin != 0){
-                int seedCount = (int) Math.floor((totalInBin/totalPixels) * seeds);
+            if (totalInBin != 0) {
+                int seedCount = (int) Math.floor((totalInBin / totalPixels) * seeds);
                 // There could be a feature which I want.
                 seedCount = (seedCount == 0) ? 1 : seedCount;
                 // Just in case the floor was useless.
@@ -128,20 +262,19 @@ public class WiseManOfBablyon {
         }
 
         // Now we bias the seed bank - we don;t want the bin that contains everything.
-        for (int bin = 0; bin < partitionedSeedBank.size(); bin++) {
+        for (int bin = 1; bin < partitionedSeedBank.size(); bin++) {
             // int factor = partitionedSeedBank.size() - bin;
-            for(int j = 0; j< bin; j++){
+            for (int j = 0; j < (bin + 1) * (bin + 1); j++) {
                 seedBank.addAll(partitionedSeedBank.get(bin));
             }
         }
 
 
-
         // If the top left corner is not black we will take it as a background.
-        Pixel topLeft = targetImage.getPixel(0,0);
-        Pixel topRight = targetImage.getPixel(targetImage.getWidth() -1 ,0);
-        Pixel bottomLeft = targetImage.getPixel(0,targetImage.getHeight()- 1);
-        Pixel bottomRight = targetImage.getPixel(targetImage.getWidth() - 1,targetImage.getHeight()-1);
+        Pixel topLeft = targetImage.getPixel(0, 0);
+        Pixel topRight = targetImage.getPixel(targetImage.getWidth() - 1, 0);
+        Pixel bottomLeft = targetImage.getPixel(0, targetImage.getHeight() - 1);
+        Pixel bottomRight = targetImage.getPixel(targetImage.getWidth() - 1, targetImage.getHeight() - 1);
         // TODO Check this.
         boolean isThereBackground = topLeft.equals(topRight) && topLeft.equals(bottomLeft) && topLeft.equals(bottomRight);
         if (true) {
@@ -164,7 +297,7 @@ public class WiseManOfBablyon {
 
 
     private Chromosome checkChild(int seedCount, Chromosome chromosome, List<Seed> candidates) {
-        List<Seed> distinctSeeds = chromosome.seeds.parallelStream().distinct().collect(Collectors.toList());
+        List<Seed> distinctSeeds = chromosome.seeds.stream().distinct().collect(Collectors.toList());
         if (distinctSeeds.size() != seedCount) {
             int seedsMissing = seedCount - distinctSeeds.size();
             List<Seed> missingSeeds = candidates.stream().filter(distinctSeeds::contains).limit(seedsMissing).collect(Collectors.toList());
@@ -197,71 +330,34 @@ public class WiseManOfBablyon {
                 Collections.shuffle(seedBank);
                 seeds = seedBank.subList(0, rectangleCount - 1);
                 distinctSeeds = seeds.stream().distinct().collect(Collectors.toList());
-            } while(seeds.size() != distinctSeeds.size());
+            } while (seeds.size() != distinctSeeds.size());
             chromosome.seeds.addAll(seeds);
             population.add(chromosome);
         }
 
-        geneticAlgorithmConfig.WithCrossOverOperator(CrossOverOperatorAB_CD_AD_CB).WithMutation((int currentGeneration, Chromosome chromosome) -> {
-            // This swaps two seeds in the the chromosome
-            int sourceInt = random.nextInt(chromosome.seeds.size());
-            int destinationInt = random.nextInt(chromosome.seeds.size());
-            Seed sourceSeed = chromosome.seeds.get(sourceInt);
-            Seed destinationSeed = chromosome.seeds.get(destinationInt);
-            chromosome.seeds.set(destinationInt, sourceSeed);
-            chromosome.seeds.set(sourceInt, destinationSeed);
-            return chromosome;
-        }).WithMutation((int currentGeneration, Chromosome chromosome) -> {
-            Chromosome mutantChromosome = chromosome.clone();
-            List<Tuple<Integer, Seed>> whichSeeds = new ArrayList<>();
-            List<Seed> whichRawSeeds = new ArrayList<>();
-            int mutantSeeds = chromosome.seeds.size() - (chromosome.seeds.size() / 3);
-            while (whichSeeds.size() != mutantSeeds) {
-                int index = random.nextInt(mutantChromosome.seeds.size());
-                Seed currentWhichSeed = mutantChromosome.seeds.get(index);
-                if (!whichRawSeeds.contains(currentWhichSeed)) {
-                    whichSeeds.add(new Tuple<>(index, currentWhichSeed));
-                    whichRawSeeds.add(currentWhichSeed);
-                }
-            }
-
-            for (Tuple<Integer, Seed> tuple : whichSeeds) {
-                int index = tuple.getFirst();
-                Seed seed = tuple.getSecond();
-                int directionCount = 3 - random.nextInt(2);
-                for (int direction = 0; direction < directionCount; direction++) {
-                    seed.grow(randomDirection());
-                }
-
-                String key = seed.toString();
-                if (mutationSeedCache.containsKey(key)) {
-                    chromosome.seeds.set(index, mutationSeedCache.get(key));
-                } else {
-                    mutationSeedCache.put(key, seed);
-                }
-            }
-
-            return mutantChromosome;
-        }).WithMutation((int currentGeneration, Chromosome chromosome) -> {
-            Chromosome mutantChromosome = chromosome.clone();
-
-            return mutantChromosome;
-        }).ScoreOperator((int currentGeneration, Chromosome chromosome) -> {
-                chromosome.seeds.forEach(
-                    (seed) -> {
-                        if (seed.similarityResult == null) {
-                            seed.similarityResult = targetImage.findBestFittingImage(seed.x, seed.y, seed.width, seed.height, samples);
+        geneticAlgorithmConfig
+                .WithCrossOverOperator(CrossOverOperatorAB_CD_AD_CB)
+                .WithMutation(GrowthMutation)
+                .WithMutation(SeedSwapper)
+                .WithMutation(TranslationMutation)
+                .WithMutation(RandomSeeds)
+                .WithMutation(RandomSeedMutationInGrowthArrayChromosome)
+                .ScoreOperator((int currentGeneration, Chromosome chromosome) -> {
+                            chromosome.seeds.forEach(
+                                    (seed) -> {
+                                        if (seed.similarityResult == null) {
+                                            seed.similarityResult = targetImage.findBestFittingImage(seed.x, seed.y, seed.width, seed.height, samples);
+                                        }
+                                    }
+                            );
+                            ImageFile chromoRepresentation = chromosome.toCJPFile();
+                            double value = chromoRepresentation.score(0, 0, targetImage, 0, 0, targetImage.getWidth(), targetImage.getHeight());
+                            Tuple<Integer, Double> overlapPenality = chromoRepresentation.overlapPercentage();
+                            chromosome.score = value;
+                            chromosome.scoreWithPenality = value + (overlapPenality.getFirst() * 441.6729559);
+                            return chromosome.scoreWithPenality;
                         }
-                    }
-                );
-                ImageFile chromoRepresentation = chromosome.toCJPFile();
-                double value = chromoRepresentation.score(0, 0, targetImage, 0, 0, targetImage.getWidth(), targetImage.getHeight());
-                Tuple<Integer, Double> overlapPenality = chromoRepresentation.overlapPercentage();
-                chromosome.score = value;
-                chromosome.scoreWithPenality = value + (overlapPenality.getFirst() * 441.6729559);
-                return chromosome.scoreWithPenality;
-            }
-        ).WithCondition((current, score, currentPopulation)-> current == GENERATIONS);
+                ).WithCondition((current, score, currentPopulation) -> System.currentTimeMillis() > terminationTime);
 
         GeneticAlgorithm<Chromosome> geneticAlgorithm = geneticAlgorithmConfig.Setup();
         geneticAlgorithm.AddWatcher(((currentGeneration, currentPopulation) -> {
@@ -277,10 +373,10 @@ public class WiseManOfBablyon {
                     fittestChromosome = chromosome.clone();
 
                 //TODO cleanup to remove
-                CJPFile imageFile = (CJPFile)chromosome.toCJPFile();
+                CJPFile imageFile = (CJPFile) chromosome.toCJPFile();
                 // String CJPFilename = debugDirectory + "/" + currentGeneration + "/" + i + ".cjp";
-                new File(debugDirectory + "/" + currentGeneration ).mkdirs();
-                String PNGFilename = debugDirectory + "/" + currentGeneration + "/" + i + "-"+ chromosome .score +  ".png";
+                new File(debugDirectory + "/" + currentGeneration).mkdirs();
+                String PNGFilename = debugDirectory + "/" + currentGeneration + "/" + i + "-" + chromosome.score + ".png";
                 // imageFile.write(CJPFilename);
                 imageFile.saveAsPNG(PNGFilename);
 
@@ -293,50 +389,40 @@ public class WiseManOfBablyon {
 
 
     public static void main(String[] args) {
+        final int timeToRun = 57000;
 
-        //final submission variables
-        final Thread thisThread = Thread.currentThread();
-        final int timeToRun = 52000; // 52 seconds;
+        WiseManOfBablyon wiseManOfBablyon = new WiseManOfBablyon(11, 5, 1000, 0.01, 0.6);
+        CJPFile targetFile = (CJPFile) (new CJPFile().read("/Users/markgalea/Dev/Source/Java/ImageFittingGA/examples/marilyn/marilyn.cjp").subsample(15,-1));
+        wiseManOfBablyon.AddSample(new CJPFile().read("/Users/markgalea/Dev/Source/Java/ImageFittingGA/examples/marilyn/whiteSample.cjp").subsample(15,0));
+        wiseManOfBablyon.AddSample(new CJPFile().read("/Users/markgalea/Dev/Source/Java/ImageFittingGA/examples/marilyn/blackSample.cjp").subsample(15,1));
+        wiseManOfBablyon.AddSample(new CJPFile().read("/Users/markgalea/Dev/Source/Java/ImageFittingGA/examples/marilyn/redSample.cjp").subsample(15,2));
+        wiseManOfBablyon.AddSample(new CJPFile().read("/Users/markgalea/Dev/Source/Java/ImageFittingGA/examples/marilyn/yellowSample.cjp").subsample(15,3));
+        wiseManOfBablyon.SetTargetImage(targetFile);
+        targetFile.saveAsPNG("/Users/markgalea/Dev/Source/Java/ImageFittingGA/examples/marilyn/debug/marilyn_small.png");
+        wiseManOfBablyon.SetDebugDirectory("/Users/markgalea/Dev/Source/Java/ImageFittingGA/examples/marilyn/debug");
 
         //Programming competition timer
-        new Thread(new Runnable() {
-            public void run() {
-                try {
-                    Thread.sleep(timeToRun);
-
-                    //chromosome to clg
-                    CLGFile outputFile = fittestChromosome.toCLGFile();
-                    outputFile.print("collage_output_file.clg"); //print clg file to disk
-
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-                //terminate other GA thread
-                //thisThread.interrupt();
-                thisThread.stop();
+        new Thread(()-> {
+            try {
+                Thread.sleep(timeToRun);
+                CLGFile outputFile = fittestChromosome.toCLGFile();
+                outputFile.print(wiseManOfBablyon.debugDirectory +  "collage_output_file.clg"); //print clg file to disk
+            } catch (Exception e) {
+                e.printStackTrace();
+            } finally {
+                CLGFile outputFile = fittestChromosome.toCLGFile();
+                outputFile.print(wiseManOfBablyon.debugDirectory +  "collage_output_file.clg"); //print clg file to disk
             }
         }).start();
 
-        //while (!Thread.interrupted()) continue generating
 
-        WiseManOfBablyon wiseManOfBablyon = new WiseManOfBablyon(11, 5, 1000, 0.01, 0.5);
-
-//        CJPFile targetFile = (CJPFile)(new CJPFile().read("/Users/markgalea/Dev/Source/Java/ImageFittingGA/examples/marilyn/marilyn.cjp").subsample(15));
-//        wiseManOfBablyon.AddSample(new CJPFile().read("/Users/markgalea/Dev/Source/Java/ImageFittingGA/examples/marilyn/whiteSample.cjp").subsample(15));
-//        wiseManOfBablyon.AddSample(new CJPFile().read("/Users/markgalea/Dev/Source/Java/ImageFittingGA/examples/marilyn/blackSample.cjp").subsample(15));
-//        wiseManOfBablyon.AddSample(new CJPFile().read("/Users/markgalea/Dev/Source/Java/ImageFittingGA/examples/marilyn/redSample.cjp").subsample(15));
-//        wiseManOfBablyon.AddSample(new CJPFile().read("/Users/markgalea/Dev/Source/Java/ImageFittingGA/examples/marilyn/yellowSample.cjp").subsample(15));
+//        CJPFile targetFile = (CJPFile)(new CJPFile().read(USERS_MARKGALEA_DEV_SOURCE_JAVA_IMAGE_FITTING_GA_EXAMPLES + FOLDER + "/pikachu.cjp").subsample(10));
+//        wiseManOfBablyon.AddSample(new CJPFile().read(USERS_MARKGALEA_DEV_SOURCE_JAVA_IMAGE_FITTING_GA_EXAMPLES + FOLDER + "/white.cjp").subsample(10));
+//        wiseManOfBablyon.AddSample(new CJPFile().read(USERS_MARKGALEA_DEV_SOURCE_JAVA_IMAGE_FITTING_GA_EXAMPLES + FOLDER + "/black.cjp").subsample(10));
+//        wiseManOfBablyon.AddSample(new CJPFile().read(USERS_MARKGALEA_DEV_SOURCE_JAVA_IMAGE_FITTING_GA_EXAMPLES + FOLDER + "/yellow_red.cjp").subsample(10));
 //        wiseManOfBablyon.SetTargetImage(targetFile);
-//        targetFile.saveAsPNG("/Users/markgalea/Dev/Source/Java/ImageFittingGA/examples/marilyn/debug/marilyn_small.png");
-//        wiseManOfBablyon.SetDebugDirectory("/Users/markgalea/Dev/Source/Java/ImageFittingGA/examples/marilyn/debug");
-
-        CJPFile targetFile = (CJPFile)(new CJPFile().read(USERS_MARKGALEA_DEV_SOURCE_JAVA_IMAGE_FITTING_GA_EXAMPLES + FOLDER + "/pikachu.cjp").subsample(20,-1));
-        wiseManOfBablyon.AddSample(new CJPFile().read(USERS_MARKGALEA_DEV_SOURCE_JAVA_IMAGE_FITTING_GA_EXAMPLES + FOLDER + "/white.cjp").subsample(20,0));
-        wiseManOfBablyon.AddSample(new CJPFile().read(USERS_MARKGALEA_DEV_SOURCE_JAVA_IMAGE_FITTING_GA_EXAMPLES + FOLDER + "/black.cjp").subsample(20,1));
-        wiseManOfBablyon.AddSample(new CJPFile().read(USERS_MARKGALEA_DEV_SOURCE_JAVA_IMAGE_FITTING_GA_EXAMPLES + FOLDER + "/yellow_red.cjp").subsample(20,2));
-        wiseManOfBablyon.SetTargetImage(targetFile);
-        targetFile.saveAsPNG(USERS_MARKGALEA_DEV_SOURCE_JAVA_IMAGE_FITTING_GA_EXAMPLES + FOLDER + "/debug/pikachu_small.png");
-        wiseManOfBablyon.SetDebugDirectory(USERS_MARKGALEA_DEV_SOURCE_JAVA_IMAGE_FITTING_GA_EXAMPLES + FOLDER + "/debug");
+//        targetFile.saveAsPNG(USERS_MARKGALEA_DEV_SOURCE_JAVA_IMAGE_FITTING_GA_EXAMPLES + FOLDER + "/debug/pikachu_small.png");
+//        wiseManOfBablyon.SetDebugDirectory(USERS_MARKGALEA_DEV_SOURCE_JAVA_IMAGE_FITTING_GA_EXAMPLES + FOLDER + "/debug");
 
 //        wiseManOfBablyon.AddSample(new CJPFile().read("/Users/markgalea/Dev/Source/Java/ImageFittingGA/examples/franceFlag/whiteSample.cjp").subsample(10));
 //        wiseManOfBablyon.AddSample(new CJPFile().read("/Users/markgalea/Dev/Source/Java/ImageFittingGA/examples/franceFlag/blueSample.cjp").subsample(10));
