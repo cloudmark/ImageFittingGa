@@ -21,9 +21,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class WiseManOfBablyon {
-    private static final String USERS_MARKGALEA_DEV_SOURCE_JAVA_IMAGE_FITTING_GA_EXAMPLES = "/Users/markgalea/Dev/Source/Java/ImageFittingGA/examples/";
-    private static final String FOLDER = "pikachu";
-
     //final submission variables
     public static String targetFileNameUrl;
     public static String compositionImagesUrl;
@@ -32,8 +29,7 @@ public class WiseManOfBablyon {
     public static int subSampling;
 
     public static Chromosome fittestChromosome = null;
-    public static int timeToRun = 57000; //57 seconds
-    public static int GENERATIONS = 1000000;
+    public static int TIME_TO_RUN = 57000; //57 seconds
     public static int PIXEL_DISTANCE;
 
 
@@ -375,25 +371,20 @@ public class WiseManOfBablyon {
         GeneticAlgorithm<Chromosome> geneticAlgorithm = geneticAlgorithmConfig.Setup();
         geneticAlgorithm.AddWatcher(((currentGeneration, currentPopulation) -> {
             new File(debugDirectory).mkdirs();
-            System.out.println(currentPopulation.get(0).score);
+            System.out.println(currentGeneration + "->" + currentPopulation.get(0).score);
             for (int i = 0; i < currentPopulation.size() && i < 10; i++) {
                 Chromosome chromosome = currentPopulation.get(i);
 
                 //checking if we should store this particular chromosome as the most fit chromosome
                 if (fittestChromosome == null)
-                    fittestChromosome = chromosome.clone();
+                    fittestChromosome = chromosome;
                 else if (chromosome.score < fittestChromosome.score)
-                    fittestChromosome = chromosome.clone();
+                    fittestChromosome = chromosome;
 
-                //TODO cleanup to remove
                 CJPFile imageFile = (CJPFile) chromosome.toCJPFile();
-                // String CJPFilename = debugDirectory + "/" + currentGeneration + "/" + i + ".cjp";
                 new File(debugDirectory + "/" + currentGeneration).mkdirs();
                 String PNGFilename = debugDirectory + "/" + currentGeneration + "/" + i + "-" + chromosome.score + ".png";
-                // imageFile.write(CJPFilename);
                 imageFile.saveAsPNG(PNGFilename);
-
-                //---- remove till here
             }
         }));
         return geneticAlgorithm.Evolve(population);
@@ -424,13 +415,17 @@ public class WiseManOfBablyon {
         //Programming competition timer
         new Thread(()-> {
             try {
-                Thread.sleep(timeToRun);
+                Thread.sleep(TIME_TO_RUN);
                 CLGFile outputFile = fittestChromosome.toCLGFile();
+                outputFile.print(collageOutputFileUrl); //print clg file to disk
+                // CJPFile cjpFile = (CJPFile)fittestChromosome.toCJPFile();
                 outputFile.print(collageOutputFileUrl); //print clg file to disk
             } catch (Exception e) {
                 e.printStackTrace();
             } finally {
                 CLGFile outputFile = fittestChromosome.toCLGFile();
+                outputFile.print(collageOutputFileUrl); //print clg file to disk
+                // CJPFile cjpFile = (CJPFile)fittestChromosome.toCJPFile();
                 outputFile.print(collageOutputFileUrl); //print clg file to disk
             }
         }).start();
@@ -462,36 +457,7 @@ public class WiseManOfBablyon {
             }
         }
 
-        //TODO to be removed underneath----------------------------------------------??
-
-        wiseManOfBablyon.AddSample(new CJPFile().read("/Users/markgalea/Dev/Source/Java/ImageFittingGA/examples/marilyn/whiteSample.cjp").subsample(15,0));
-        wiseManOfBablyon.AddSample(new CJPFile().read("/Users/markgalea/Dev/Source/Java/ImageFittingGA/examples/marilyn/blackSample.cjp").subsample(15,1));
-        wiseManOfBablyon.AddSample(new CJPFile().read("/Users/markgalea/Dev/Source/Java/ImageFittingGA/examples/marilyn/redSample.cjp").subsample(15,2));
-        wiseManOfBablyon.AddSample(new CJPFile().read("/Users/markgalea/Dev/Source/Java/ImageFittingGA/examples/marilyn/yellowSample.cjp").subsample(15,3));
-
-
-        targetFile.saveAsPNG("/Users/markgalea/Dev/Source/Java/ImageFittingGA/examples/marilyn/debug/marilyn_small.png");
-        wiseManOfBablyon.SetDebugDirectory("/Users/markgalea/Dev/Source/Java/ImageFittingGA/examples/marilyn/debug");
-
-
-//        CJPFile targetFile = (CJPFile)(new CJPFile().read(USERS_MARKGALEA_DEV_SOURCE_JAVA_IMAGE_FITTING_GA_EXAMPLES + FOLDER + "/pikachu.cjp").subsample(10));
-//        wiseManOfBablyon.AddSample(new CJPFile().read(USERS_MARKGALEA_DEV_SOURCE_JAVA_IMAGE_FITTING_GA_EXAMPLES + FOLDER + "/white.cjp").subsample(10));
-//        wiseManOfBablyon.AddSample(new CJPFile().read(USERS_MARKGALEA_DEV_SOURCE_JAVA_IMAGE_FITTING_GA_EXAMPLES + FOLDER + "/black.cjp").subsample(10));
-//        wiseManOfBablyon.AddSample(new CJPFile().read(USERS_MARKGALEA_DEV_SOURCE_JAVA_IMAGE_FITTING_GA_EXAMPLES + FOLDER + "/yellow_red.cjp").subsample(10));
-//        wiseManOfBablyon.SetTargetImage(targetFile);
-//        targetFile.saveAsPNG(USERS_MARKGALEA_DEV_SOURCE_JAVA_IMAGE_FITTING_GA_EXAMPLES + FOLDER + "/debug/pikachu_small.png");
-//        wiseManOfBablyon.SetDebugDirectory(USERS_MARKGALEA_DEV_SOURCE_JAVA_IMAGE_FITTING_GA_EXAMPLES + FOLDER + "/debug");
-
-//        wiseManOfBablyon.AddSample(new CJPFile().read("/Users/markgalea/Dev/Source/Java/ImageFittingGA/examples/franceFlag/whiteSample.cjp").subsample(10));
-//        wiseManOfBablyon.AddSample(new CJPFile().read("/Users/markgalea/Dev/Source/Java/ImageFittingGA/examples/franceFlag/blueSample.cjp").subsample(10));
-//        wiseManOfBablyon.AddSample(new CJPFile().read("/Users/markgalea/Dev/Source/Java/ImageFittingGA/examples/franceFlag/redSample.cjp").subsample(10));
-//        wiseManOfBablyon.SetTargetImage(new CJPFile().read("/Users/markgalea/Dev/Source/Java/ImageFittingGA/examples/franceFlag/franceFlag.cjp").subsample(10));
-//        wiseManOfBablyon.SetDebugDirectory("/Users/markgalea/Dev/Source/Java/ImageFittingGA/examples/franceFlag/debug");
-
         System.out.println("===============================================");
-
-        //TODO ------ remove till here
-
         Chromosome chromosome = wiseManOfBablyon.Compute();
         System.out.println(chromosome.toString());
     }

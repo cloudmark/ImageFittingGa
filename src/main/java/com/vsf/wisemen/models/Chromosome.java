@@ -14,17 +14,19 @@ public class Chromosome {
     public double scoreWithPenality;
 
     public Chromosome(int width, int height) {
-    this.width =width;
+        this.width =width;
         this.height = height;
         this.seeds = new ArrayList<>();
-
     }
 
     public Chromosome clone() {
         Chromosome chromosome = new Chromosome(this.width, this.height);
         chromosome.score = this.score;
         chromosome.scoreWithPenality = this.scoreWithPenality;
-        chromosome.seeds = this.seeds.stream().map(Seed::clone).collect(Collectors.toList());
+        this.seeds.forEach((s)->{
+            Seed clonedSeed = s.clone();
+            chromosome.seeds.add(clonedSeed);
+        });
         return chromosome;
     }
 
@@ -32,7 +34,6 @@ public class Chromosome {
         CJPFile cjpFile = new CJPFile(width, height);
         seeds.forEach((s) -> {
             SimilarityResult similarityResult = s.similarityResult;
-            // TODO: Fix the CJP typecast
             cjpFile.compose(s.x, s.y, (CJPFile) similarityResult.bestFittingSample, similarityResult.tx, similarityResult.ty, s.width, s.height);
         });
 
@@ -50,32 +51,42 @@ public class Chromosome {
 
     public CLGFile toCLGFile()
     {
-        ImageFile curImgFile;
         SimilarityResult curSimResult;
         Seed curSeed;
-        int factor;
-        CLGFile clgFile = new CLGFile(new ArrayList<CLGFileEntry>());
+        CLGFile clgFile = new CLGFile();
+        ImageFile chromosomeImageFile = toCJPFile();
         for (int i=0; i<seeds.size(); i++){
-            curImgFile = seeds.get(i).similarityResult.bestFittingSample;
             curSimResult = seeds.get(i).similarityResult;
             curSeed = seeds.get(i);
-            factor = curImgFile.getFactor();
 
-            int realwidth = curSeed.width*factor;
-            int realheight = curSeed.height*factor;
+            int realSampleWidth = curSeed. width * curSimResult.bestFittingSample.getFactor();
+            int realSampleHeight = curSeed.height * curSimResult.bestFittingSample.getFactor();
+            int realSampleOriginX = curSimResult.tx *  curSimResult.bestFittingSample.getFactor();
+            int realSampleOriginY = curSimResult.ty *  curSimResult.bestFittingSample.getFactor();
 
-            if (curSeed.originalX*factor +  realwidth > curImgFile.getParent().getWidth()) {
-                realwidth = curImgFile.getParent().getWidth() - curSeed.originalX*factor;
+            int realTargetWidth = chromosomeImageFile.getWidth() * curSimResult.bestFittingSample.getFactor();
+            int realTargetHeight = chromosomeImageFile.getHeight() * curSimResult.bestFittingSample.getFactor();
+            int realTargetOriginX =  curSeed.x *  curSimResult.bestFittingSample.getFactor();
+            int realTargetOriginY = curSeed.y *  curSimResult.bestFittingSample.getFactor();
+
+
+            if ( realSampleOriginX + realSampleWidth > realTargetWidth ) {
+                realSampleWidth = realTargetWidth - realSampleOriginX;
+                System.out.println(realSampleWidth);
             }
 
-            if (curSeed.originalY*factor +  realheight> curImgFile.getParent().getHeight()) {
-                realheight = curImgFile.getParent().getHeight() - curSeed.originalY*factor;
+            if (realSampleOriginY + realSampleHeight > realTargetHeight) {
+                realSampleHeight = realTargetHeight - realSampleOriginY;
+                System.out.println(realSampleHeight);
+
             }
 
-            CLGFileEntry clgentry = new CLGFileEntry(curImgFile.getComposingImageId(),
-                    curSeed.originalX*factor,curSeed.originalY*factor, realwidth,realheight,
-                    curSimResult.tx*factor,curSimResult.ty*factor);
-            clgFile.entries.add(clgentry);
+            CLGFileEntry clgEntry = new CLGFileEntry(curSimResult.bestFittingSample.getComposingImageId(),
+                    realSampleOriginX,realSampleOriginY,
+                    realSampleWidth,realSampleHeight,
+                    realTargetOriginX,realTargetOriginY);
+
+            clgFile.entries.add(clgEntry);
         }
         return clgFile;
     }

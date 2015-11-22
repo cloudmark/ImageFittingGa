@@ -4,13 +4,13 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.util.ArrayList;
+import java.util.List;
 
 public class CLGFile {
 
-    public ArrayList<CLGFileEntry> entries;
+    public List<CLGFileEntry> entries = new ArrayList<>();
 
-    public CLGFile(ArrayList<CLGFileEntry> entries){
-        this.entries = entries;
+    public CLGFile(){
     }
 
     public void print(String filename) {
@@ -23,6 +23,8 @@ public class CLGFile {
                 writer.write(entries.get(i).print());
                 writer.newLine();
             }
+            writer.flush();
+            writer.close();
         } catch (Exception ignored) {
 
         }

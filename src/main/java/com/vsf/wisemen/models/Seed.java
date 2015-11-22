@@ -90,8 +90,6 @@ public class Seed {
         clone.height = this.height;
         clone.similarityResult = null;
         clone.growth = this.growth.stream().collect(Collectors.toList());
-
-        this.similarityResult = null;
         return clone;
     }
 

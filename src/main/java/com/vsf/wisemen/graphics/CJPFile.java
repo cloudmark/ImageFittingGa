@@ -257,12 +257,8 @@ public class CJPFile extends ImageFile {
     // TODO: Fix Parameter Flips
     @Override
     public void compose(int tx, int ty, CJPFile compositeFile, int sx, int sy, int width, int height){
-        try {
-            CJPFile rectangle = compositeFile.getRectangle(sx, sy, sx + width - 1, sy + height - 1);
-            this.paste(tx, ty, rectangle);
-        }catch(Exception e){
-            System.out.println(e);
-        }
+        CJPFile rectangle = compositeFile.getRectangle(sx, sy, sx + width - 1, sy + height - 1);
+        this.paste(tx, ty, rectangle);
     }
 
 
