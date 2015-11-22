@@ -18,6 +18,11 @@ import java.util.stream.Collectors;
 public class WiseManOfBablyon {
     private static final String USERS_MARKGALEA_DEV_SOURCE_JAVA_IMAGE_FITTING_GA_EXAMPLES = "/Users/markgalea/Dev/Source/Java/ImageFittingGA/examples/";
     private static final String FOLDER = "pikachu";
+
+    //final submission variables
+    public static Chromosome fittestChromosome = null;
+    public static int GENERATIONS = 1000000;
+
     private String debugDirectory = null;
     private int seeds;
     private int rectangleCount;
@@ -255,8 +260,7 @@ public class WiseManOfBablyon {
                 chromosome.scoreWithPenality = value + (overlapPenality.getFirst() * 441.6729559);
                 return chromosome.scoreWithPenality;
             }
-        ).WithCondition((current, score, currentPopulation)-> current == 100);
-
+        ).WithCondition((current, score, currentPopulation)-> current == GENERATIONS);
 
         GeneticAlgorithm<Chromosome> geneticAlgorithm = geneticAlgorithmConfig.Setup();
         geneticAlgorithm.AddWatcher(((currentGeneration, currentPopulation) -> {
@@ -264,12 +268,22 @@ public class WiseManOfBablyon {
             System.out.println(currentPopulation.get(0).score);
             for (int i = 0; i < currentPopulation.size() && i < 10; i++) {
                 Chromosome chromosome = currentPopulation.get(i);
+
+                //checking if we should store this particular chromosome as the most fit chromosome
+                if (fittestChromosome == null)
+                    fittestChromosome = chromosome.clone();
+                else if (chromosome.score < fittestChromosome.score)
+                    fittestChromosome = chromosome.clone();
+
+                //TODO cleanup to remove
                 CJPFile imageFile = (CJPFile)chromosome.toCJPFile();
                 // String CJPFilename = debugDirectory + "/" + currentGeneration + "/" + i + ".cjp";
                 new File(debugDirectory + "/" + currentGeneration ).mkdirs();
                 String PNGFilename = debugDirectory + "/" + currentGeneration + "/" + i + "-"+ chromosome .score +  ".png";
                 // imageFile.write(CJPFilename);
                 imageFile.saveAsPNG(PNGFilename);
+
+                //---- remove till here
             }
         }));
         return geneticAlgorithm.Evolve(population);
@@ -278,6 +292,32 @@ public class WiseManOfBablyon {
 
 
     public static void main(String[] args) {
+
+        //final submission variables
+        final Thread thisThread = Thread.currentThread();
+        final int timeToRun = 52000; // 52 seconds;
+
+        //Programming competition timer
+        new Thread(new Runnable() {
+            public void run() {
+                try {
+                    Thread.sleep(timeToRun);
+
+                    //TODO chromosome to clg
+
+                    //TODO print clg file to disk
+
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                //terminate other GA thread
+                //thisThread.interrupt();
+                thisThread.stop();
+            }
+        }).start();
+
+        //while (!Thread.interrupted()) continue generating
+
         WiseManOfBablyon wiseManOfBablyon = new WiseManOfBablyon(11, 5, 1000, 0.01, 0.5);
 
 //        CJPFile targetFile = (CJPFile)(new CJPFile().read("/Users/markgalea/Dev/Source/Java/ImageFittingGA/examples/marilyn/marilyn.cjp").subsample(15));

@@ -22,6 +22,8 @@ public class Chromosome {
 
     public Chromosome clone() {
         Chromosome chromosome = new Chromosome(this.width, this.height);
+        chromosome.score = this.score;
+        chromosome.scoreWithPenality = this.scoreWithPenality;
         chromosome.seeds = this.seeds.stream().map(Seed::clone).collect(Collectors.toList());
         return chromosome;
     }
