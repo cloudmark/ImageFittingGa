@@ -3,6 +3,7 @@ package com.vsf.wisemen.graphics;
 
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
+import java.util.ArrayList;
 import java.util.List;
 
 
@@ -26,7 +27,8 @@ public abstract class ImageFile {
         throw new UnsupportedOperationException();
     }
 
-    public double score(int sx, int sy, ImageFile imageFile, int tx, int ty, int width, int height){
+    // TODO: Fix Parameter Flips
+    public double score(int tx, int ty, ImageFile imageFile, int sx, int sy, int width, int height){
         double ans = 0.0;
         CJPFile sampleCJP = (CJPFile)imageFile;
         if (sx + width > sampleCJP.getWidth()) width = sampleCJP.getWidth() - sx;
@@ -37,10 +39,13 @@ public abstract class ImageFile {
         for (int i = 0; i < height; i++) {
             for (int j = 0; j < width; j++) {
                 Pixel p0 = this.getPixel(tx + j, ty + i);
-                Pixel p1 = this.getPixel(sx + j, sy + i);
+                Pixel p1 = sampleCJP.getPixel(sx + j, sy + i);
+                if ((p0 == null )|| (p1 == null)){
+                    throw new AssertionError();
+                }
                 ans += Math.sqrt(Math.pow((double) (p0.r - p1.r), 2.0D)
-                        + Math.pow((double) (p0.g - p1.g), 2.0D)
-                        + Math.pow((double) (p0.b - p1.b), 2.0D));
+                    + Math.pow((double) (p0.g - p1.g), 2.0D)
+                    + Math.pow((double) (p0.b - p1.b), 2.0D));
 
             }
         }
@@ -53,13 +58,29 @@ public abstract class ImageFile {
         throw new UnsupportedOperationException();
     }
 
-    public void read(String filename) {
+    public ImageFile read(String filename) {
         throw new UnsupportedOperationException();
     }
 
     public SimilarityResult findBestFittingImage(int sx, int sy, int width, int height, List<ImageFile> samples) {
-        throw new NotImplementedException();
-
-
-  }
+        // TODO: Do not go to the very end...
+        List<SimilarityResult> globalBest = new ArrayList<>();
+        for (ImageFile sample : samples) {
+//            System.out.println("Looking @ [" + ((CJPFile)sample).sourceFilename + "]");
+            SimilarityResult localBest = new SimilarityResult();
+            for( int tx = 0; tx < sample.getWidth(); tx++) {
+                for( int ty = 0; ty < sample.getHeight(); ty++) {
+                    double curr = this.score(sx, sy, sample , tx, ty, width, height);
+                    if (curr <= localBest.score) {
+                        localBest.score = curr;
+                        localBest.bestFittingSample = sample;
+//                        System.out.println("\t" + curr);
+                    }
+                }
+            }
+            globalBest.add(localBest);
+        }
+        globalBest.sort((x, y) -> new Double(x.score).compareTo(y.score));
+        return globalBest.get(0);
+    }
 }

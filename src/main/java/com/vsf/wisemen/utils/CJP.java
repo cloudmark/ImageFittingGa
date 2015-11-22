@@ -1,7 +1,10 @@
 package com.vsf.wisemen.utils;
 
+import com.vsf.wisemen.graphics.ImageFile;
+
 import java.awt.Color;
 import java.awt.image.BufferedImage;
+import java.awt.image.ImageFilter;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -131,7 +134,7 @@ public class CJP {
             } catch (IOException var19) {
                 var19.printStackTrace();
             } finally {
-                if(reader != null) {
+                if (reader != null) {
                     try {
                         reader.close();
                     } catch (IOException var16) {
@@ -140,7 +143,6 @@ public class CJP {
                 }
 
             }
-
         }
     }
 

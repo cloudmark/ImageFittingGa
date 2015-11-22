@@ -12,10 +12,12 @@ public class Seed {
     public int y;
     public int width;
     public int height;
+    public int imageWidth;
+    public int imageHeight;
     public SimilarityResult similarityResult;
 
     List<GrowDirection> growth;
-    public Seed(String name, int x, int y) {
+    public Seed(String name, int x, int y, int imageWidth, int imageHeight) {
         this.name = name;
         this.originalX = x;
         this.originalY = y;
@@ -23,38 +25,44 @@ public class Seed {
         this.y = y;
         this.width = 1;
         this.height = 1;
+        this.imageWidth = imageWidth;
+        this.imageHeight = imageHeight;
         this.growth = new ArrayList<>();
         this.similarityResult = null;
     }
 
     public void grow(GrowDirection growDirection) {
-        this.growth.add(growDirection);
         switch (growDirection) {
             case TOP: {
                 if (y > 0) {
+                    this.growth.add(growDirection);
                     this.y--;
                     this.height++;
                 }
-
+                break;
             }
 
             case LEFT:
-                if (x < 0){
-                    this.x --;
+                if (x > 0){
+                    this.growth.add(growDirection);
+                    this.x--;
                     this.width++;
                 }
                 break;
 
             case RIGHT:
-                if (this.x < this.width - 1) {
+                if (this.x + this.width < this.imageWidth) {
+                    this.growth.add(growDirection);
                     this.width++;
                 }
                 break;
 
             case BOTTOM: {
-                if (this.y < this.height - 1) {
+                if (this.y + this.height < this.imageHeight) {
+                    this.growth.add(growDirection);
                     this.height++;
                 }
+                break;
             }
         }
     }
@@ -70,7 +78,7 @@ public class Seed {
     }
 
     public Seed clone(){
-        Seed clone = new Seed(this.name, this.x, this.y);
+        Seed clone = new Seed(this.name, this.x, this.y, this.imageWidth, this.imageHeight);
         clone.width = this.width;
         clone.height = this.height;
         clone.similarityResult = null;

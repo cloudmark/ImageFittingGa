@@ -5,17 +5,17 @@ import com.vsf.ga.GeneticAlgorithmConfig;
 import com.vsf.ga.functions.Tuple;
 import com.vsf.wisemen.graphics.CJPFile;
 import com.vsf.wisemen.graphics.ImageFile;
-import com.vsf.wisemen.graphics.Pixel;
-import com.vsf.wisemen.graphics.impl.RedGreenBlueImage;
-import com.vsf.wisemen.graphics.impl.SingleColorImage;
 import com.vsf.wisemen.models.Chromosome;
 import com.vsf.wisemen.models.GrowDirection;
 import com.vsf.wisemen.models.Seed;
 
+import java.io.File;
 import java.util.*;
 import java.util.stream.Collectors;
 
 public class WiseManOfBablyon {
+    private static final String USERS_MARKGALEA_DEV_SOURCE_JAVA_IMAGE_FITTING_GA_EXAMPLES = "/Users/markgalea/Dev/Source/Java/ImageFittingGA/examples/";
+    private static final String FOLDER = "pikachu";
     private String debugDirectory = null;
     private int seeds;
     private int rectangleCount;
@@ -26,6 +26,7 @@ public class WiseManOfBablyon {
     private List<Seed> seedBank = new ArrayList<>();
     private Map<String, Seed> mutationSeedCache = new HashMap<>();
     private GeneticAlgorithmConfig<Chromosome> geneticAlgorithmConfig;
+    private Seed backgroundSeed = null;
 
     public void AddSample(ImageFile imageFile) {
         this.samples.add(imageFile);
@@ -34,20 +35,26 @@ public class WiseManOfBablyon {
     public void SetTargetImage(ImageFile targetImage) {
         this.targetImage = targetImage;
         for (int i = 0; i < seeds; i++) {
-            seedBank.add(new Seed("S" + i, random.nextInt(targetImage.getWidth()), random.nextInt(targetImage.getHeight())));
+            seedBank.add(new Seed("S" + i, random.nextInt(targetImage.getWidth()),
+                    random.nextInt(targetImage.getHeight()),
+                    targetImage.getWidth(), targetImage.getHeight()));
         }
+        this.backgroundSeed = new Seed("SBG", 0,0,targetImage.getWidth(), targetImage.getHeight());
+        for(int i = 0; i < targetImage.getWidth(); i++) backgroundSeed.grow(GrowDirection.RIGHT);
+        for(int j = 0; j < targetImage.getHeight(); j++) backgroundSeed.grow(GrowDirection.BOTTOM);
+
     }
 
-    public WiseManOfBablyon(int rectangleCount, int seedFactor, int populationCount, double mutationRate, double crossOverChromosomePercentage) {
+    public WiseManOfBablyon(int rectangleCount, int seedFactor, int populationCount, double mutationRate, double crossOverRate, double crossOverChromosomePercentage) {
         this.rectangleCount = rectangleCount;
         this.populationCount = populationCount;
         this.seeds = rectangleCount * seedFactor;
-        geneticAlgorithmConfig = new GeneticAlgorithmConfig<>(populationCount, crossOverChromosomePercentage, mutationRate);
+        geneticAlgorithmConfig = new GeneticAlgorithmConfig<>(populationCount, crossOverChromosomePercentage, crossOverRate, mutationRate);
     }
 
 
     private Chromosome checkChild(int seedCount, Chromosome chromosome, List<Seed> candidates) {
-        List<Seed> distinctSeeds = chromosome.seeds.stream().distinct().collect(Collectors.toList());
+        List<Seed> distinctSeeds = chromosome.seeds.parallelStream().distinct().collect(Collectors.toList());
         if (distinctSeeds.size() != seedCount) {
             int seedsMissing = seedCount - distinctSeeds.size();
             List<Seed> missingSeeds = candidates.stream().filter(distinctSeeds::contains).limit(seedsMissing).collect(Collectors.toList());
@@ -74,7 +81,11 @@ public class WiseManOfBablyon {
         for (int i = 0; i < populationCount; i++) {
             Chromosome chromosome = new Chromosome(targetImage.getWidth(), targetImage.getHeight());
             Collections.shuffle(seedBank);
-            chromosome.seeds.addAll(seedBank.subList(0, rectangleCount));
+            // Add the background.
+            chromosome.seeds.add(backgroundSeed);
+            // Add the different seeds.
+            chromosome.seeds.addAll(seedBank.subList(0, rectangleCount - 1));
+            population.add(chromosome);
         }
 
         geneticAlgorithmConfig.WithCrossOverOperator(
@@ -122,12 +133,14 @@ public class WiseManOfBablyon {
             for (Tuple<Integer, Seed> tuple : whichSeeds) {
                 int index = tuple.getFirst();
                 Seed seed = tuple.getSecond();
-                int directionCount = 3 - random.nextInt(3);
+                int directionCount = 3 - random.nextInt(2);
                 for (int direction = 0; direction < directionCount; direction++) {
                     seed.grow(randomDirection());
                 }
 
                 String key = seed.toString();
+//                chromosome.seeds.set(index, seed);
+//                 TODO: Fix the caching
                 if (mutationSeedCache.containsKey(key)) {
                     chromosome.seeds.set(index, mutationSeedCache.get(key));
                 } else {
@@ -144,17 +157,24 @@ public class WiseManOfBablyon {
                         }
                     }
                 );
-                return chromosome.toCJPFile().score(0, 0, targetImage, 0, 0, targetImage.getWidth(), targetImage.getHeight());
+                double value = chromosome.toCJPFile().score(0, 0, targetImage, 0, 0, targetImage.getWidth(), targetImage.getHeight());
+                chromosome.score = value;
+                return value;
             }
-        );
+        ).WithCondition((current, score, currentPopulation)-> current == 100);
 
 
         GeneticAlgorithm<Chromosome> geneticAlgorithm = geneticAlgorithmConfig.Setup();
         geneticAlgorithm.AddWatcher(((currentGeneration, currentPopulation) -> {
-            for (int i = 0; i < currentPopulation.size(); i++) {
-                CJPFile imageFile = (CJPFile)currentPopulation.get(i).toCJPFile();
+            new File(debugDirectory).mkdirs();
+            System.out.println("Generation: " + currentGeneration + " [" + currentPopulation.get(0).score + "]");
+            // TODO: FIx 10 hardcoding
+            for (int i = 0; i < currentPopulation.size() && i < 10; i++) {
+                Chromosome chromosome = currentPopulation.get(i);
+                CJPFile imageFile = (CJPFile)chromosome.toCJPFile();
                 // String CJPFilename = debugDirectory + "/" + currentGeneration + "/" + i + ".cjp";
-                String PNGFilename = debugDirectory + "/" + currentGeneration + "/" + i + ".png";
+                new File(debugDirectory + "/" + currentGeneration ).mkdirs();
+                String PNGFilename = debugDirectory + "/" + currentGeneration + "/" + i + "-"+ chromosome .score +  ".png";
                 // imageFile.write(CJPFilename);
                 imageFile.saveAsPNG(PNGFilename);
             }
@@ -165,12 +185,31 @@ public class WiseManOfBablyon {
 
 
     public static void main(String[] args) {
-        WiseManOfBablyon wiseManOfBablyon = new WiseManOfBablyon(5, 3, 100, 0.8, 0.5);
-        wiseManOfBablyon.AddSample(new SingleColorImage(100, 100, new Pixel(255, 0, 0)));
-        wiseManOfBablyon.AddSample(new SingleColorImage(100, 100, new Pixel(0, 255, 0)));
-        wiseManOfBablyon.AddSample(new SingleColorImage(100, 100, new Pixel(0, 0, 255)));
-        wiseManOfBablyon.SetTargetImage(new RedGreenBlueImage(100, 300));
-        wiseManOfBablyon.SetDebugDirectory("./debug");
+        WiseManOfBablyon wiseManOfBablyon = new WiseManOfBablyon(11, 5, 1000, 0.8, 0.01, 0.5);
+
+//        CJPFile targetFile = (CJPFile)(new CJPFile().read("/Users/markgalea/Dev/Source/Java/ImageFittingGA/examples/marilyn/marilyn.cjp").subsample(15));
+//        wiseManOfBablyon.AddSample(new CJPFile().read("/Users/markgalea/Dev/Source/Java/ImageFittingGA/examples/marilyn/whiteSample.cjp").subsample(15));
+//        wiseManOfBablyon.AddSample(new CJPFile().read("/Users/markgalea/Dev/Source/Java/ImageFittingGA/examples/marilyn/blackSample.cjp").subsample(15));
+//        wiseManOfBablyon.AddSample(new CJPFile().read("/Users/markgalea/Dev/Source/Java/ImageFittingGA/examples/marilyn/redSample.cjp").subsample(15));
+//        wiseManOfBablyon.AddSample(new CJPFile().read("/Users/markgalea/Dev/Source/Java/ImageFittingGA/examples/marilyn/yellowSample.cjp").subsample(15));
+//        wiseManOfBablyon.SetTargetImage(targetFile);
+//        targetFile.saveAsPNG("/Users/markgalea/Dev/Source/Java/ImageFittingGA/examples/marilyn/debug/marilyn_small.png");
+//        wiseManOfBablyon.SetDebugDirectory("/Users/markgalea/Dev/Source/Java/ImageFittingGA/examples/marilyn/debug");
+
+        CJPFile targetFile = (CJPFile)(new CJPFile().read(USERS_MARKGALEA_DEV_SOURCE_JAVA_IMAGE_FITTING_GA_EXAMPLES + FOLDER + "/pikachu.cjp").subsample(20));
+        wiseManOfBablyon.AddSample(new CJPFile().read(USERS_MARKGALEA_DEV_SOURCE_JAVA_IMAGE_FITTING_GA_EXAMPLES + FOLDER + "/white.cjp").subsample(20));
+        wiseManOfBablyon.AddSample(new CJPFile().read(USERS_MARKGALEA_DEV_SOURCE_JAVA_IMAGE_FITTING_GA_EXAMPLES + FOLDER + "/black.cjp").subsample(20));
+        wiseManOfBablyon.AddSample(new CJPFile().read(USERS_MARKGALEA_DEV_SOURCE_JAVA_IMAGE_FITTING_GA_EXAMPLES + FOLDER + "/yellow_red.cjp").subsample(20));
+        wiseManOfBablyon.SetTargetImage(targetFile);
+        targetFile.saveAsPNG(USERS_MARKGALEA_DEV_SOURCE_JAVA_IMAGE_FITTING_GA_EXAMPLES + FOLDER + "/debug/pikachu_small.png");
+        wiseManOfBablyon.SetDebugDirectory(USERS_MARKGALEA_DEV_SOURCE_JAVA_IMAGE_FITTING_GA_EXAMPLES + FOLDER + "/debug");
+
+//        wiseManOfBablyon.AddSample(new CJPFile().read("/Users/markgalea/Dev/Source/Java/ImageFittingGA/examples/franceFlag/whiteSample.cjp").subsample(10));
+//        wiseManOfBablyon.AddSample(new CJPFile().read("/Users/markgalea/Dev/Source/Java/ImageFittingGA/examples/franceFlag/blueSample.cjp").subsample(10));
+//        wiseManOfBablyon.AddSample(new CJPFile().read("/Users/markgalea/Dev/Source/Java/ImageFittingGA/examples/franceFlag/redSample.cjp").subsample(10));
+//        wiseManOfBablyon.SetTargetImage(new CJPFile().read("/Users/markgalea/Dev/Source/Java/ImageFittingGA/examples/franceFlag/franceFlag.cjp").subsample(10));
+//        wiseManOfBablyon.SetDebugDirectory("/Users/markgalea/Dev/Source/Java/ImageFittingGA/examples/franceFlag/debug");
+
         wiseManOfBablyon.Compute();
     }
 

@@ -11,20 +11,27 @@ import java.util.List;
 public class GeneticAlgorithmConfig<GS> {
     public double crossOverChromosomePercentage = 0.5;
     public double mutationRate = 0.4;
+    public double crossOverRate = 0.4;
     public int initialPopulationCount;
     List<MutationOperator<GS>> mutationOperators = new ArrayList<>();
     List<CrossOverOperator<GS>> crossOverOperators = new ArrayList<>();
     ScoringFunction<GS> scoringOperator = null;
     GoodEnoughCondition<GS> isGoodEnough = null;
 
-    public GeneticAlgorithmConfig(int initialPopulationCount, double crossOverChromosomePercentage, double mutationRate) {
+    public GeneticAlgorithmConfig(int initialPopulationCount, double crossOverChromosomePercentage, double crossOverRate,  double mutationRate) {
         this.crossOverChromosomePercentage = crossOverChromosomePercentage;
+        this.crossOverRate = crossOverRate;
         this.mutationRate = mutationRate;
         this.initialPopulationCount = initialPopulationCount;
     }
 
     public GeneticAlgorithmConfig<GS> WithMutation(MutationOperator<GS> mutationFn) {
         mutationOperators.add(mutationFn);
+        return this;
+    }
+
+    public GeneticAlgorithmConfig<GS> WithCondition(GoodEnoughCondition<GS> goodEnoughConditionFn) {
+        isGoodEnough = goodEnoughConditionFn;
         return this;
     }
 

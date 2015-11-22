@@ -5,4 +5,11 @@ public class SimilarityResult {
     public int ty;
     public double score;
     public ImageFile bestFittingSample;
+
+    public SimilarityResult(){
+        this.tx = 0;
+        this.ty = 0;
+        this.score = Double.MAX_VALUE;
+        this.bestFittingSample = null;
+    }
 }

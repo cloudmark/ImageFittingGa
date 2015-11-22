@@ -26,18 +26,25 @@ public class CJPFile extends ImageFile {
     private Pixel[][] matrix;
     private boolean[][] pastes;
     private ImageFile parent;
+    private Pixel background = new Pixel(0, 0, 0);
+    public String sourceFilename;
 
-    public CJPFile(){
-        this.parent = null;
-        this.factor = 1;
-        //Arrays.fill(pastes,false);
-    }
 
     public CJPFile(int width, int height){
         this.row = height;
         this.column = width;
         this.parent = null;
-        this.factor = 1; 
+        this.factor = 1;
+        this.matrix = new Pixel[width][height];
+        for(int x = 0; x < width; x++){
+            for(int y = 0; y< height; y++){
+                this.matrix[x][y] = background;
+            }
+        }
+    }
+
+    public CJPFile(){
+        this(0,0);
     }
 
     public CJPFile(ImageFile parent, int factor) {
@@ -55,7 +62,7 @@ public class CJPFile extends ImageFile {
     @Override
     public Pixel getPixel(int x, int y) {
         try {
-            if ((x > this.column) || (y > this.row)) return new Pixel(0, 0, 0);
+            if ((x > this.column) || (y > this.row)) return background;
             else return matrix[x][y];
         } catch (Exception e) {
             throw new NotImplementedException();
@@ -65,7 +72,8 @@ public class CJPFile extends ImageFile {
     public CJPFile getRectangle(int x0, int y0, int x1, int y1) {
         if (x1 >= this.column) x1 = this.column - 1;
         if (y1 >= this.row) y1 = this.row - 1;
-        if ((x0 > x1) || (y0 > y1)) throw new NotImplementedException();
+        if ((x0 > x1) || (y0 > y1))
+            throw new NotImplementedException();
         CJPFile cjp = new CJPFile(null, 1);
         cjp.column = x1 - x0 + 1;
         cjp.row = y1 - y0 + 1;
@@ -112,6 +120,7 @@ public class CJPFile extends ImageFile {
     public ImageFile subsample(int factor) {
         CJPFile subcjp = new CJPFile(this, factor);
         subcjp.parent = this;
+        subcjp.sourceFilename = sourceFilename;
         subcjp.column = (int) Math.ceil(this.column / (factor + 0.0));
         subcjp.row = (int) Math.ceil(this.row / (factor + 0.0));
         subcjp.matrix = new Pixel[subcjp.column][subcjp.row];
@@ -152,7 +161,8 @@ public class CJPFile extends ImageFile {
     }
 
     @Override
-    public void read(String filename) {
+    public ImageFile read(String filename) {
+        this.sourceFilename = filename;
         CJP cjp = new CJP();
         cjp.read(filename);
         this.row = cjp.height;
@@ -179,8 +189,7 @@ public class CJPFile extends ImageFile {
         }
         this.parent = null;
         this.factor = 1;
-
-
+        return this;
     }
 
     @Override
@@ -215,22 +224,23 @@ public class CJPFile extends ImageFile {
 
     }
 
+    // TODO: Fix Parameter Flips
     @Override
-    public void compose(int sx, int sy, CJPFile compositeFile, int tx, int ty, int width, int height){
-        CJPFile rectangle = compositeFile.getRectangle(sx,sy,sx+width-1,sy+width-1);
-        this.paste(tx,ty,rectangle);
+    public void compose(int tx, int ty, CJPFile compositeFile, int sx, int sy, int width, int height){
+        CJPFile rectangle = compositeFile.getRectangle(sx,sy,sx+width-1,sy+height-1);
+        this.paste(tx, ty, rectangle);
     }
 
 
     private Color[] getColorLine(int idx) {
         Color[] colours = new Color[this.getWidth()];
-        for(int i = 0; i < this.getWidth(); ++i) {
-            Pixel p = getPixel(idx, i);
+        for(int i = 0; i < this.getWidth(); i++) {
+            Pixel p = getPixel(i, idx);
             colours[i] = new Color(p.r, p.g, p.b);
         }
-
         return colours;
     }
+
 
     public void saveAsPNG(String pngFilename) {
         BufferedImage image = new BufferedImage(this.getWidth(), this.getHeight(), 1);

@@ -34,11 +34,11 @@ public class GeneticAlgorithm<GS> {
     }
 
     private List<GS> prunePopulation(int currentGeneration, List<GS> currentPopulation) {
-        Map<GS, Double> scoreCache = currentPopulation.parallelStream()
+        Map<GS, Double> scoreCache = currentPopulation.stream()
                 .map((x) -> new Tuple<>(x, config.scoringOperator.score(currentGeneration, x)))
                 .collect(Collectors.toMap(Tuple::getFirst, Tuple::getSecond));
         currentPopulation.sort((x, y) -> scoreCache.get(x).compareTo(scoreCache.get(y)));
-        return currentPopulation.subList(0, config.initialPopulationCount);
+        return currentPopulation.subList(0, config.initialPopulationCount - 1);
     }
 
     private List<GS> mutate(int currentGeneration, List<GS> sourcePopulation) {
@@ -46,9 +46,8 @@ public class GeneticAlgorithm<GS> {
         sourcePopulation.parallelStream().forEach((chromosome) -> {
             if (random.nextDouble() < config.mutationRate) {
                 GS mutatedChromosome = chromosome;
-                for (MutationOperator<GS> mutationOperator : config.mutationOperators) {
-                    mutatedChromosome = mutationOperator.mutate(currentGeneration, mutatedChromosome);
-                }
+                MutationOperator<GS> mutationOperator = config.mutationOperators.get(random.nextInt(config.mutationOperators.size()));
+                mutatedChromosome = mutationOperator.mutate(currentGeneration, mutatedChromosome);
                 population.add(mutatedChromosome);
             } else {
                 population.add(chromosome);
@@ -61,12 +60,13 @@ public class GeneticAlgorithm<GS> {
         List<GS> population = new ArrayList<>(sourcePopulation.size());
         population.addAll(sourcePopulation);
         int currentPopulationCount = sourcePopulation.size();
-        for (int i = 0; i < (currentPopulationCount / 2); i++) {
-            int mumIndex = random.nextInt((int) (Math.floor((double) (currentPopulationCount / 2))));
-            int dadIndex = random.nextInt((int) (Math.floor((double) (currentPopulationCount / 2))));
+        int populationSplit = (int) Math.floor(currentPopulationCount * config.crossOverRate);
+        for (int i = 0; i < populationSplit; i++) {
+            int mumIndex = random.nextInt(populationSplit);
+            int dadIndex = random.nextInt(populationSplit);
             GS mum = sourcePopulation.get(mumIndex);
             GS dad = sourcePopulation.get(dadIndex);
-            config.crossOverOperators.stream().forEach((crossOverOperator) -> {
+            config.crossOverOperators.parallelStream().forEach((crossOverOperator) -> {
                 Tuple<GS, GS> childrenTuple = crossOverOperator.crossOver(currentGeneration, mum, dad, config.crossOverChromosomePercentage);
                 population.add(childrenTuple.getFirst());
                 population.add(childrenTuple.getSecond());
