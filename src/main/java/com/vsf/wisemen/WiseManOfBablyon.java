@@ -5,6 +5,7 @@ import com.vsf.ga.GeneticAlgorithmConfig;
 import com.vsf.ga.functions.CrossOverOperator;
 import com.vsf.ga.functions.Tuple;
 import com.vsf.wisemen.graphics.CJPFile;
+import com.vsf.wisemen.graphics.CLGFile;
 import com.vsf.wisemen.graphics.ImageFile;
 import com.vsf.wisemen.graphics.Pixel;
 import com.vsf.wisemen.models.Chromosome;
@@ -303,9 +304,9 @@ public class WiseManOfBablyon {
                 try {
                     Thread.sleep(timeToRun);
 
-                    //TODO chromosome to clg
-
-                    //TODO print clg file to disk
+                    //chromosome to clg
+                    CLGFile outputFile = fittestChromosome.toCLGFile();
+                    outputFile.print("collage_output_file.clg"); //print clg file to disk
 
                 } catch (InterruptedException e) {
                     e.printStackTrace();
