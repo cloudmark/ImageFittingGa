@@ -15,7 +15,7 @@ PopulationCount=1000
 MutationRate=0.6
 CrossOverRate=0.01
 SubSampling=15
-PixelDistance=50
+PixelDistance=1000
 
 echo "Target: $TargetFileNameUrl"
 echo "CompositionImagesUrl: $CompositionImagesUrl"

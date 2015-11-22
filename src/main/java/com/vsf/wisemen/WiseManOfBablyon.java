@@ -282,10 +282,10 @@ public class WiseManOfBablyon {
         Pixel topRight = targetImage.getPixel(targetImage.getWidth() - 2, 1);
         Pixel bottomLeft = targetImage.getPixel(0, targetImage.getHeight() - 2);
         Pixel bottomRight = targetImage.getPixel(targetImage.getWidth() - 2, targetImage.getHeight() - 2);
-        // TODO Check this.
         boolean imageHasBackground = topLeft.getDistance(topRight) <= PIXEL_DISTANCE
                 && topLeft.getDistance(bottomLeft) <= PIXEL_DISTANCE
                 && topLeft.getDistance(bottomRight) <= PIXEL_DISTANCE;
+        System.out.println("Backgound: " + imageHasBackground);
         if (imageHasBackground) {
             this.backgroundSeed = new Seed("SBG", 0, 0, targetImage.getWidth(), targetImage.getHeight());
             for (int i = 0; i < targetImage.getWidth(); i++) backgroundSeed.grow(GrowDirection.RIGHT);
